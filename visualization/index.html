@@ -17,10 +17,10 @@
     <!-- leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.1/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.0.1/dist/leaflet.js"></script>
-    <script src="L.Hotline.js"></script>
 
 
     <!-- datasets -->
+    <script src="diverging_airlines.js"></script>
     <script src="diverging_routes.js"></script>
     <script src="std_routes.js"></script>
     <script src="airports.js"></script>
@@ -29,23 +29,32 @@
     <!-- app -->
     <script>
       $(function () {
-        var map_diverging = L.map('map-diverging').setView([50,10.5], 4).addLayer(
-          L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            minZoom: 2,
-            maxZoom: 14,
-            attribution: 'Map data © <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
-        }));
-        var map_fuel = L.map('map-fuel').setView([50,10.5], 4).addLayer(
-          L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            minZoom: 2,
-            maxZoom: 14,
-            attribution: 'Map data © <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
-        }));
+        var map_diverging = L.map('map-diverging', {
+                                scrollWheelZoom: false
+                              })
+                              .setView([50,10.5], 4)
+                              .addLayer(
+                                L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                  minZoom: 2,
+                                  maxZoom: 14,
+                                  attribution: 'Map data © <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
+                              }));
+        var map_fuel = L.map('map-fuel', {
+                                scrollWheelZoom: false
+                              })
+                              .setView([50,10.5], 4)
+                              .addLayer(
+                                L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                  minZoom: 2,
+                                  maxZoom: 14,
+                                  attribution: 'Map data © <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
+                              }));
+
         var map_diverging_layer = null;
         var map_fuel_layer = null;
 
         // removing empty diverging routes
-        diverging_routes = diverging_routes.filter(function (routes) {return routes.routes.length > 0;});
+        //diverging_routes = diverging_routes.filter(function (routes) {return routes.routes.length > 0;});
 
         // trick to fix the layout
         $("body").on('shown.bs.tab', function() { 
@@ -56,7 +65,7 @@
         // filling combo boxes
         diverging_routes
           .map(function (route) {
-            return route.airports.departureCode;
+            return route.departureCode;
           })
           .filter(function (value, index, self) { 
             return self.indexOf(value) === index;
@@ -78,7 +87,7 @@
 
         std_routes
           .map(function (route) {
-            return route.airports.departureCode;
+            return route.departureCode;
           })
           .filter(function (value, index, self) { 
             return self.indexOf(value) === index;
@@ -103,6 +112,8 @@
           var select = document.getElementById('select-arrival-diverging');
           var departure = this.value;
 
+          setTimeout(function () {$(select).trigger('change')}); 
+
           if (!departure) {
             select.innerHTML = '';
             return;
@@ -112,10 +123,10 @@
 
           diverging_routes
             .filter(function (route) {
-              return route.airports.departureCode === departure;
+              return route.departureCode === departure;
             })
             .map(function (route) {
-              return route.airports.arrivalCode;
+              return route.arrivalCode;
             })
             .filter(function (value, index, self) { 
               return self.indexOf(value) === index;
@@ -138,6 +149,8 @@
           var select = document.getElementById('select-arrival-fuel');
           var departure = this.value;
 
+          setTimeout(function () {$(select).trigger('change')});
+
           if (!departure) {
             select.innerHTML = '';
             return;
@@ -147,10 +160,10 @@
 
           std_routes
             .filter(function (route) {
-              return route.airports.departureCode === departure;
+              return route.departureCode === departure;
             })
             .map(function (route) {
-              return route.airports.arrivalCode;
+              return route.arrivalCode;
             })
             .filter(function (value, index, self) { 
               return self.indexOf(value) === index;
@@ -188,42 +201,35 @@
 
           // plot std route
           var route = std_routes.filter(function (route) {
-              return route.airports.departureCode === departure &&
-                       route.airports.arrivalCode === arrival;
+              return route.departureCode === departure &&
+                       route.arrivalCode === arrival;
           }).pop();
 
           if (!route)
             return;
 
-          var coords = route.route.map(function (point) {
-                                return [point.lat/10, point.lon/10]
-                              });
           var options = {
-            color: 'blue', smoothFactor: 1
+            color: 'blue'
           };
 
-          L.polyline(coords, options).addTo(map_diverging_layer);
+          L.polyline(route.route, options).addTo(map_diverging_layer);
 
           // plot diverging routes
 
           var routes = diverging_routes.filter(function (routes) {
-              return routes.airports.departureCode === departure &&
-                       routes.airports.arrivalCode === arrival;
+              return routes.departureCode === departure &&
+                       routes.arrivalCode === arrival;
           }).pop();
 
           if (!routes)
             return;
 
           routes.routes.forEach(function (route) {
-            var coords = route.map(function (point) {
-                            return [point.lat/10, point.lon/10]
-                          });
             var options = {
-              color: 'red',
-              smoothFactor: 1
+              color: 'red'
             };
 
-            L.polyline(coords, options).addTo(map_diverging_layer);
+            L.polyline(route, options).addTo(map_diverging_layer);
           });
 
         });
@@ -243,8 +249,8 @@
             return;
 
           var route = std_routes.filter(function (route) {
-              return route.airports.departureCode === departure &&
-                       route.airports.arrivalCode === arrival;
+              return route.departureCode === departure &&
+                       route.arrivalCode === arrival;
           }).pop();
 
           if (!route)
@@ -254,46 +260,39 @@
 
           // plot straight line
           var options = {
-            color: 'black',
-            smoothFactor: 1
+            color: 'black'
           };
           var points = [
-            [route.route[0].lat/10, route.route[0].lon/10],
-            [destination.lat/10, destination.lon/10]
+            route.route[0],
+            destination
           ];
 
           L.polyline(points, options).addTo(map_fuel_layer);
 
-          // plot hotline
-          var coords = route.route.map(function (point, idx, arr) {
-            var angle = 0;
-            if (idx+2 < arr.length) {
-              var A = point;
-              var B = arr[idx+1];
-              var C = destination;
-              var AB = Math.sqrt(Math.pow(B.lat-A.lat,2) + Math.pow(B.lon-A.lon,2));
-              var BC = Math.sqrt(Math.pow(B.lat-C.lat,2) + Math.pow(B.lon-C.lon,2));
-              var AC = Math.sqrt(Math.pow(C.lat-A.lat,2) + Math.pow(C.lon-A.lon,2));
-              angle = Math.floor(Math.acos((BC*BC+AB*AB-AC*AC)/(2*BC*AB))*180/3.14159265359);
-              angle = Math.abs(angle-180)
-            }
-            return [point.lat/10, point.lon/10, angle]
+          var coords = [];
+
+          for (var i = 0; i < route.route.length-1; i++) {
+            coords.push([
+              route.route[i],
+              route.route[i+1]
+            ]);
+          }
+
+          coords.forEach(function (points) {
+            var B = points[0];
+            var C = points[1];
+            var A = destination;
+            var AB = Math.sqrt(Math.pow(B[0]-A[0],2) + Math.pow(B[1]-A[1],2));
+            var BC = Math.sqrt(Math.pow(B[0]-C[0],2) + Math.pow(B[1]-C[1],2));
+            var AC = Math.sqrt(Math.pow(C[0]-A[0],2) + Math.pow(C[1]-A[1],2));
+            var angle = Math.acos((BC*BC+AB*AB-AC*AC)/(2*BC*AB));
+
+            var options = {
+              color: 'hsl(' + Math.floor(120 - Math.sqrt(Math.sin(angle),2)*120) + ',75%,50%)'
+            };
+
+            L.polyline(points, options).addTo(map_fuel_layer);
           });
-
-          console.log(coords);
-
-          L.hotline(coords, {
-            min: 0,
-            max: 180,
-            palette: {
-              0.0: '#008800',
-              0.5: '#ffff00',
-              1.0: '#ff0000'
-            },
-            weight: 5,
-            outlineColor: '#000000',
-            outlineWidth: 1
-          }).addTo(map_fuel_layer);
 
         });
 
@@ -308,30 +307,28 @@
         <p>An interactive data visualization</p>
       </div>
       <ul class="nav nav-tabs">
-        <li class="active"><a data-toggle="tab" href="#div-main">Home</a></li>
-        <li><a data-toggle="tab" href="#div-diverging">Abnormal routes</a></li>
+        <li class="active"><a data-toggle="tab" href="#div-airlines">Airlines</a></li>
+        <li><a data-toggle="tab" href="#div-diverging">Diverging routes</a></li>
         <li><a data-toggle="tab" href="#div-fuel">Fuel saving</a></li>
       </ul>
 
       <div class="tab-content">
 
-        <div id="div-main" style="padding: 1em 0em;" class="tab-pane fade active in">
-          <h3>HOME</h3>
-          <p>Some content.</p>
+        <div id="div-airlines" style="padding: 1em 0em;" class="tab-pane fade">
+          TODOOOOOOOO
         </div>
 
         <div id="div-diverging" style="padding: 1em 0em;" class="tab-pane fade">
 
           <div class="row">
             <div class="col-xs-4">
+              <label for="select-departure-diverging">Departure</label>
               <select id="select-departure-diverging" class="form-control" name="airport-diverging">
                 <option value="">Choose an airport</option>
               </select>
             </div>
-          </div>
-
-          <div class="row">
             <div class="col-xs-4">
+              <label for="select-arrival-diverging">Arrival</label>
               <select id="select-arrival-diverging" class="form-control" name="airport-diverging">
               </select>
             </div>
@@ -343,18 +340,17 @@
 
         </div>
 
-        <div id="div-fuel" style="padding: 1em 0em;" class="tab-pane fade">
+        <div id="div-fuel" style="padding: 1em 0em;" class="tab-pane fade active in">
 
           <div class="row">
             <div class="col-xs-4">
+              <label for="select-departure-fuel">Departure</label>
               <select id="select-departure-fuel" class="form-control" name="airport-fuel">
                 <option value="">Choose an airport</option>
               </select>
             </div>
-          </div>
-
-          <div class="row">
             <div class="col-xs-4">
+              <label for="select-arrival-fuel">Arrival</label>
               <select id="select-arrival-fuel" class="form-control" name="airport-fuel">
               </select>
             </div>

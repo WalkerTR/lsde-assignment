@@ -1,0 +1,1 @@
+var diverging_airlines = [{"name":"Airbus Industrie","nDiverging":1},{"name":"Miramichi Air Service","nDiverging":1},{"name":"Stuttgarter Flugdienst","nDiverging":1},{"name":"Vistajet","nDiverging":3}]
