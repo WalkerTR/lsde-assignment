@@ -18,9 +18,14 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.1/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.0.1/dist/leaflet.js"></script>
 
+    <!-- datatables -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/bs/dt-1.10.12/datatables.min.css"/>
+    <script src="https://cdn.datatables.net/v/bs/dt-1.10.12/datatables.min.js"></script>
+
+
 
     <!-- datasets -->
-    <script src="diverging_airlines.js"></script>
+    <script src="airlines.js"></script>
     <script src="diverging_routes.js"></script>
     <script src="std_routes.js"></script>
     <script src="airports.js"></script>
@@ -29,6 +34,19 @@
     <!-- app -->
     <script>
       $(function () {
+
+        var dataset = airlines.map(function (el) {
+          return [el.name, el.nDiverging];
+        });
+
+        $('#table-airlines').DataTable( {
+            data: dataset,
+            columns: [
+                { title: "Airlines" },
+                { title: "Diverging flights" }
+            ]
+        } );
+
         var map_diverging = L.map('map-diverging', {
                                 scrollWheelZoom: false
                               })
@@ -52,9 +70,6 @@
 
         var map_diverging_layer = null;
         var map_fuel_layer = null;
-
-        // removing empty diverging routes
-        //diverging_routes = diverging_routes.filter(function (routes) {return routes.routes.length > 0;});
 
         // trick to fix the layout
         $("body").on('shown.bs.tab', function() { 
@@ -307,7 +322,7 @@
         <p>An interactive data visualization</p>
       </div>
       <ul class="nav nav-tabs">
-        <li class="active"><a data-toggle="tab" href="#div-airlines">Airlines</a></li>
+        <li class="active"><a data-toggle="tab" href="#div-airlines">Airlines info</a></li>
         <li><a data-toggle="tab" href="#div-diverging">Diverging routes</a></li>
         <li><a data-toggle="tab" href="#div-fuel">Fuel saving</a></li>
       </ul>
@@ -315,7 +330,7 @@
       <div class="tab-content">
 
         <div id="div-airlines" style="padding: 1em 0em;" class="tab-pane fade active in">
-          TODOOOOOOOO
+          <table id="table-airlines" class="table table-striped table-bordered" cellspacing="0" width="100%"></table>
         </div>
 
         <div id="div-diverging" style="padding: 1em 0em;" class="tab-pane fade">
