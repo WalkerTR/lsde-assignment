@@ -71,19 +71,329 @@ Additionally
 
 \subsubsection{Positions}
 
+Decoding the position of an aircraft from ADS-B position messages is more
+complicated than one would expect. Information on latitude and longitude is
+divided into two types of position messages: odd and even. Both these types of
+messages are needed to correctly decode the position. This is according to a
+format called Compact Position Reporting (CPR), which allows to encode higher
+resolution information in less bits, but is obviously less straight-forward to
+decode.
+
+For the actual decoding in our algorithm we used the java-adsb library, which
+however makes the effective parallelization of the entire operation more
+challenging. In partocular, the decoding procedure implemented by the library is
+essentially sequential, in that all position messages of a particular aircraft
+must be submitted in order of increasing timestamp. This renders the
+distribution and parallelization of the process practically impossible.
+
+However, even though the positions for a single aircraft must be decoded
+sequentially by a single node, it is still possible to distribute the data by
+aircraft, allowing us to spread the work among the cluster. The distribution
+involves grouping operations that are known to be particularly expensive, since
+they require a lot of data to be shuffled and shared between the nodes.
+Nevertheless, we did not see alternative approaches to the problem, given the
+(quite intrinsic) limitations of the decoding process.
+
+The position decoding algorithm goes through the following phases:
+
+\begin{enumerate}
+  \item Extract the raw messages and their timestamp from the avro-encoded data
+  \item Decode the messages from the raw representation
+  \item Filter out messages that are not position messages
+  \item Order the messages according to their timestamp
+  \item Group the messages by ICAO
+  \item For each ICAO, go through the messages in order of timestamp and decode
+  the positions
+\end{enumerate}
+
+Notice that, even if we were able to distribute the work by ICAO, there is still
+a very high number of messages to be processed by a single worker node. In order
+to avoid memory problems, we decided to split the decoding process between days,
+therefore running the above algorithm separately for each day that we had
+available in the dataset. This choice has obvious consequences on the phases
+that follow, as we were not able to detect flights between two different days.
+From our observations, however, we concluded that these flights are not very
+frequent, so at the end of the day the final results did not suffer too much.
+
+% Format of the output?
+
 \subsubsection{Flights}
 
+\paragraph{Identification of discrete flights}
+
+Having extracted all position information from the raw avro files, there is now
+the problem of identifying discrete flights from it.
+Given a sequence of positions for a given aircraft, on a particular day, we
+though about how to group this information in chunks, each chunk representing a
+potential flight. An important insight is given by observing the data: ADS-B
+messages systematically stop being received by the sensors when the aircraft
+approaches the ground. It follows that there must be a pause in the data between
+two different flights, and in particular between the landing of a flight and the
+take-off of another.
+
+Another point to consider is the characteristics of position messages received
+during a flight. Position messages are sent by the aircrafts several times per
+minute, so two subsequent entries are likely to differ very slightly in their
+space, altitude and timestamp values. If they are not, then these messages are
+not considered good enough for our purposes.
+
+Position points for a given aircraft are thus grouped together according to a
+simple clustering algorithm: all points are analyzed in order of timestamp, and
+two subsequent points are considered belonging in the same cluster if and only
+if they are no more than 20 minutes apart, their distance is no more than 20
+kilometers and their altitudes differ no more than 200 meters.
+
+Each group is then further analyzed to determine if it actually corresponds to a
+single flight or not. Again, the analysis is fairly simple, and it considers
+altitude information of the points to detect take-offs and landings. In
+particular, a group of points is considered a valid flight if and only if it
+starts and ends with points at an altitude of 3000 km or below, and shows an
+ascent as well as a descent. Ascents and descents are defined as sequences of
+points which altitudes rise, respectively decrease, steadily for 2000 meters.
+
+\paragraph{Departure and arrival airports}
+
+A flight is given by a sequence of positions, as well as departure and arrival
+airports. There two last informations, however, are not provided by the data and
+must be inferred in some way. Our approach was to consider the first and last
+position point of a flight, and determine the airports as the closest ones to
+these points, in terms of euclidean distance.
+
+To detect the airports, we used the help of an external dataset containing a
+list of airports together with their locations. This dataset originally
+contained much more data than we needed, as it also listed small non-commercial
+airports. In order for our algorithm to be reasonably correct, we had to trim
+the dataset first removing the airports without a IATA code, and then keeping
+only commercial airports with the help of an external list we found on the
+Internet. This filtering reduced the list from XXX to XXX entries.
+The resulting number of entries is still a little bit high for our purposes, but
+it was nevertheless the best dataset we could get. The alternative would have
+been to build a dataset by hand, which seemed extremely time consuming.
+% TODO ^^^^^^^^^^
+
+We specifically set the threshold of 3000 m in the flight detection algorithm
+for purpose of airport detection: after some observations of read flights on the
+website FlightRadar24, we concluded that when an aircraft goes below an altitude
+of 3000 m, its position is very close to the take-off/landing airport. The
+airport identification works reasonably well in this setting, and with the
+external dataset. It is of couse not perfect, for two main reasons:
+
+\begin{itemize}
+  \item The dataset may still contain minor airports that are very close to
+  bigger commercial ones that are the real target of a flight; in these
+  situations, it is possible that the minor airport gets erroneously selected;
+  \item A threshold of 3000 m may noy be sufficient in areas that contain many
+  big commercial airports that are very close to each other; one example of such
+  area is London.
+\end{itemize}
+
+Having considered these issues, we still settled for the simplest solution, as
+we did not find alternative ways to detect airports given the data available.
+
+\paragraph{Sectors}
+
+The route detection algorithm, as explained in details below, uses a
+representation of flights and routes as a sequence of sectors, where each sector
+represents portion of the world map. For this reason, the flights detection
+phase outputs flights as sequences of sectors rather than position points. This
+has two main advantages:
+
+\begin{itemize}
+  \item It prepares the data to be easily processed by the following phase of
+  the algorithm
+  \item It represents flights with much less space than as a highly-dense
+  sequence of points
+\end{itemize}
+
+We could have considered alternative ways to eliminate redundant information and
+reduce the amount of data needed to represent a single flight, but the routes
+detection algorithm would stil have transformed those representations to
+sequences of sectors. It follows that converting directly from position points
+to sectors was obviously the best approach.
+
+In practice, a sequence of position points is translated in a sequence of
+sectors by simply truncating the latitude and longitude part of a point to one
+decimal digit. Strings of values with the same truncated latitude and
+longitude represent the same sector, and are compressent into one. This process
+yields sectors of about 10 km by 10 km, which is a good approximation for our
+purposes, where sub-kilometer precision is not needed.
+
 \subsubsection{Routes}
+
+The most important part of the process is the detection of routes between pairs
+of airports. Standard routes between a pair airports are likely to be used by
+the majority of flights between those airports. Our algorithm relies on the
+assumption that the converse should also be true, namely that if a route is used
+by the majority of flights going from an airport to another, than that route
+must represent a (possibly, the) standard route between that pair of airports.
+
+The actual route detection process relies on an aggregative clustering algorithm
+that groups together flights according to a distance metric. The results of the
+clustering are used to determine the standard route between a certain pair of
+airports. More precisely, the algorithm goes through the following steps for
+each pair of airports:
+
+\begin{enumerate}
+  \item Apply the clustering algorithm to all the flights that have the
+  current pair of airports as endpoints.
+  \item Select the cluster that classifies the highest number of routes.
+  \item Select a route that constitues the representative of
+  that cluster as the one having the least distance between al the other
+  routes in the cluster
+  \item The representative of this cluster determines the standard route
+  between the pair of airports
+  \item All the routes classified by the other clusters represent routes that
+  diverge from the standard route
+\end{enumerate}
+
+The approach described above has the advantage of being simple and generally
+correct in most situations. It has, of course, some problems, that come in
+particular from its being fairly naive. First of all, it goes under the
+assumption that the standard route, officially prescribed by the
+appropriate institutions, is the one that is used by most flights. This
+assumption may be invalidated in two obvious ways, among possibly others:
+
+\begin{itemize}
+  \item The analysis clearly does not take into account flights, and therefore
+  routes that cannot make through the route detection phase of the algorithm.
+  Our dataset is not extremely reliable, so say the least. The OpenSky Network
+  has, and the time or writing this paper, a fairly good coverage of western
+  Europe, but some sports may still be poorly detected by the sensors. If a
+  standard route happens to pass through an area that is poorly covered, it is
+  likely that other, non standard routes will be selected by the algorithm as
+  standard, just because they can be detected.
+  \item There may be reasons or events, such as military conflicts, for which
+  airplanes are forced to systematically deviate from a standard route, for a
+  period of time that can span days or even months. These temporary anomalies
+  clearly invalidate this assumption, and would go absolutely undetected by our
+  algorithm, especially since it gives information over just a week of time.
+\end{itemize}
+
+These, however, are fundamental problems of the data we have available. They
+affect the results of the algorithm, but do not depend on it so they cannot be
+reduced using a more clever algorithm. We feel that, with the information
+available and in particular without an external source
+of standard routes, considering this assumption as true is the best
+possible approach.
+
+However, there are some issues that have to do with the particular
+implementation of the algorithm:
+
+\begin{itemize}
+  \item There could be situations where clusters have the same amount of routes,
+  or the numbers differ very slightly. In this cases, the accuracy of the
+  results inevitably decreases.
+  \item There could be areas that are poorly covered by the sensors, or that
+  have few flights passing though it. A cluster with five routes would be
+  selected against one with two or three, but clearly it does not have a strong
+  argument in determining the standard route between two airports. There are two
+  possible approaches to this. The first is to recognize that the informations
+  available is not enough, and possibly leave some pairs of airports with
+  undetermined standard routes. The other, and the one that we follow, is to
+  just run the algorithm without taking into account how many routes are
+  actually involved in the selection of the standard route. A possible
+  refinement could be to add to the front-end visualization of the standard
+  routes an indication of ``accuracy'' of a particular route based on the amount
+  of data available in the detection.
+\end{itemize}
+
+\paragraph{Clustering algorithm}
+
+Routes, both standard and nonstandard, are determined separately for each
+ordered pair of airports. The pairs are ordered in the sense that routes from
+Schiphol to Charles de Gaulle and Charles de Gaulle to Schiphol are considered
+separately. The algorithm proceeds by grouping together flights for each pair of
+airports. Then, given a particular pair, the following sequence of steps is
+executed for each flight, one after the other.
+
+\begin{itemize}
+  \item Test the flight agains every already present cluster, where the test is
+  positive if and only if the distance between the current flight and every
+  flight in the cluster is below a certain threshold
+  \item If the test is positive for some cluster, add the flight to that cluster
+  \item Otherwise, create a new cluster with the current flight as the only
+  classified flight
+\end{itemize}
+
+As it can be seen, the clustering algorithm proceeds by maintaining a list of
+clusters that gets updated at each iteration, making it fundamentally
+sequential. It follows that, on a large scale implementation, every execution of
+the clustering algorithm will be carried on by a single worker. The
+parallelization of the process, however, is not damaged: a separate clustering
+algorithm must be executed for each pair of airports, so it sufficies to
+distribute the data among the nodes by pair of airports.
+
+Our approach of clustering together routes represented as sequences of sectors
+is inspired by the Leader Algorithm described in [reference], but differs from
+it in some ways. Sectors in [reference] are bounded airspace regions under the
+control of a single air traffic controller or small team, hence they cover a
+relatively large area. Flights with such subdivision usually go through 5--10
+sectors. Our sectors are smaller --- each flight has approximately 20--40 of
+them --- therefore they represent a much more fine-grained subdivision of the
+world map.
+
+In [reference], distance between two routes is computed as a simple editing
+distance between a lexical representation of routes. With smaller sectors,
+however, comes the need to take other factors into account. An extreme example
+of why this is needed is given by two routes that are almost parallel and at
+distance of slightly more than 10 km. In our subdivision in sectors of 10 km by
+10 km, these two routes would end up represented by a sequence with almost no
+common sectors, even though they are actually very similar. A simple editing
+distance function would assign the same value to this pair of routes, as well as
+another pair of routes much more distant and different from each other.
+
+To avoid errors in the clustering, we also consider the euclidean distance
+between differing sectors of two routes as a weight in the final result. This
+values, together with the editing distance, determine the distance between two
+routes. The threshold at the heart of the algorithm, as well as the other
+parameters, have been fine-tuned with experimentations and
+observation of the results.
+
+\subsubsection{CO2 consumption}
+
+% ??????
 
 \subsection{Deployment on the hadoop cluster}
 % how we actually implemented the algorithms on the hadoop cluster
 
+% also add results of the different phases in terms of file size. for example,
+% how much the data shrinks from raw avro to position messages only.
+
 \section{Experiments}
 % a description of the experiments and their results.
+
+%%% position grouping
+% LOG: positions-20160918 has 199030 clusters and 1219 good clusters
+% LOG: positions-20160919 has 170594 clusters and 1103 good clusters
+% LOG: positions-20160920 has 126370 clusters and 1241 good clusters
+% LOG: positions-20160921 has 127855 clusters and 1205 good clusters
+% LOG: positions-20160922 has 127982 clusters and 1308 good clusters
+% LOG: positions-20160923 has 130662 clusters and 1243 good clusters
+% LOG: positions-20160924 has 121624 clusters and 874 good clusters
+
+%%% flight -> airline. how to, statistics: how many without airline
+
+%%% nondiverging vs diverging flights
+
+
 
 \section{Conclusion}
 % revisit the research questions and hypotheses and try to answer them. Any new
 % questions? Insights in the usability of the employed technology for particular
 % tasks?
+
+% 70 active sensors in the opensky network
+
+\section{Future work}
+
+Improve algorithms:
+
+* flight detection
+  * dataset relating callsigns to flights
+  * using velocity and or more advanced techniques to make up for the misisng points
+* route detection
+  * use external database
+* CO2 consumption
+  * use icao to get aircraft characteristics
 
 \end{document}
