@@ -21,6 +21,21 @@ Abstract goes here.
 % on, in particular, discuss the two research papers chosen with this project
 % (and discussed in your presentation)
 
+\subsection{Bringing up OpenSky}
+Most of aircraft are provided with ADB-S transmitter, which send continuosly information about the status and the position of the aircraft to guarantee better air traffic control. The messages are not encripted end, in most region, this technology will become mandatory in 2020. For these reasons OpenSky network was recently born. \\
+OpenSky is an open source network that aggregates ADS-B messages collected by volunteers around the globe. The dataset is accessible to everyone for non-profit purposes and the data is provided in the raw format, in order to perform research and statistics about air traffic. \\
+However there are some limitation to the data. Only part of Europe has a good coverage, which means there are many areas where is not yet possible to detect airplanes informations. Furthermore messages are collected by volunteers and there is not guarantee that antennas are working properly 24/7.
+
+    \subsubsection{ADS-B messages}
+
+    The ADS-B standard defines different kinds of messages which are sent at different frequencies:
+    \begin{itemize}
+        \item \textit{Aircraft identification} messages contain the callsign of the airplane;
+        \item \textit{Airborne position} messages contain altitude, latititude and longitude of the airplane and are sent twice per second;
+        \item \textit{Airborne velocity} messages contain climb rate and velocity of the airplane.
+    \end{itemize}
+    In addition to these messages, other emergencies, priority, capability, navigation accuracy category, and operational modes messages could be broadcasted.
+
 \subsection{OpenSky Network}
 
 \subsection{Route detection}
