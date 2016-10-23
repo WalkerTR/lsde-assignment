@@ -76,6 +76,13 @@ extract information about airplanes and flights:
   the airplane.
 \end{itemize}
 
+Every ADS-B transmitter is assigned a unique 24-bit ICAO number. Since the
+transmitters installed on the airplanes are hardly changed, we can safely
+consider an aircraft and its ADS-B transmitter as the same entity. Every raw
+ADS-B message records the ICAO number of the transmitter, hence the aircraft,
+that sent it. This is basically the way we are able to associate information
+from the ADS-B messages to individual airplanes.
+
 \subsection{Route clustering}
 
 The research led by J. DeArmon showed that similar routes can be grouped
@@ -624,7 +631,8 @@ an ideal dataset, every cluster corresponds to a flight.
   24/09/2016 & 121624 & 874 \\
   \hline
   \end{tabular}
-  \caption{Number of clusters and flights per day}
+  \caption{Amount of clusters and flights per day, as determined by the flight
+    detection algorithm}
   \label{table}
 \end{table}
 
@@ -636,21 +644,55 @@ completely trivial task, as airline information is not provided at all by the
 data. Every aircraft, hence every flight, has an ICAO number associated to it,
 from which it is possible to determine callsigns from the identification
 messages in the dataset. In the case of commercial flights, the callsign of an
-aircraft contains the ICAO three-letter code of the airline for which the
+aircraft contains the three-letter code of the airline for which the
 vehicle is flying for at the moment. Since aircraft are bought by airlines and
 hardly transferred from an airline to another, it is safe to assume that only
 one callsign is sufficient to determine the airline of an aircraft.
-The mapping between three-letter ICAO codes of airlines and their name has been
+The mapping between three-letter codes of airlines and their name has been
 done with the help of an external dataset.
 
-Of 19860 distinct icaos for which identification messages were available, 15911
+Of 19860 distinct ICAOs for which identification messages were available, 15911
 had a unique three-letter airline code in their callsigns, and 15691 had a code
 actually corresponding to an airline in the dataset. The remaining 4169
-icaos without a proper airline code are likely to correspond to private airplanes.
+ICAOs without a proper airline code are likely to correspond to private airplanes.
 
 \subsection{Diverging flights}
 
 %%% nondiverging vs diverging flights
+
+We were able to associate an airline to almost all of the flights the resulted
+from the route clustering phase. From this information, we then determined how
+many flights, per airline, follow and do not follow the standard route for their
+particular pair of airports, as identified by our standard route detection.
+We observed that the majority of flights do follow tha standard route for their
+particular pair of departure and arrival airports. Table~\ref{airline-table}
+shows an excerpt of the data that we were able to collect.
+
+\begin{table}
+  \centering
+  \begin{tabular}{|c|c|c|}
+  \hline
+  \textbf{Airline} & \textbf{Normal} & \textbf{Diverging} \\
+  \hline
+  KLM Royal Dutch Airlines & 203 & 14 \\
+  Ryanair & 124 & 20 \\
+  Swiss International Air Lines & 794 & 38 \\
+  Alitalia & 412 & 39 \\
+  British Airways & 12 & 2 \\
+  Lufthansa & 1329 & 38 \\
+  easyJet & 108 & 15 \\
+  Germanwings & 191 & 18 \\
+  \hline
+  \end{tabular}
+  \caption{Excerpt of data relating some major airlines to flights that comply
+    or diverge from a standard route}
+  \label{airline-table}
+\end{table}
+
+From these results we may conclude that, especially for big companies with many
+flights associated to them, the standard routes as detected by our algorithm are
+really ``standard'', in the sense that there is a significant difference between
+flights that follow them and flights that do not.
 
 \section{Conclusion}
 % revisit the research questions and hypotheses and try to answer them. Any new
