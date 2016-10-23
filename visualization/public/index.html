@@ -322,6 +322,8 @@
             var AC = Math.sqrt(Math.pow(C[0]-A[0],2) + Math.pow(C[1]-A[1],2));
             var angle = Math.acos((BC*BC+AB*AB-AC*AC)/(2*BC*AB));
 
+            if (isNaN(angle)) angle = 0;
+
             var options = {
               color: 'hsl(' + Math.floor(120 - Math.sqrt(Math.cos(angle/2))*120) + ',75%,50%)'
             };
