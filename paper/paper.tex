@@ -83,9 +83,32 @@ Additionally
 % spark, scala, etc
 % python, haskell for scripting, etc
 
-\subsection{Algorithms}
+\subsection{Algorithm overview}
 
-\subsubsection{Positions}
+Our processing algorithm is composed of three phases that are executed in
+sequence. The output of a phase is the input of the next. The process starts
+from a dataset of raw ADS-B messages encoded in AVRO format, and ends producing
+the data necessary to answer our research questions. The phases are the
+following:
+
+\begin{enumerate}
+  \item \textbf{Position extraction}: the dataset of AVRO-encoded ADS-B messages
+  is analyzed to extract only the position information abount the aircrafts. In
+  particular, this phase produces a table of timestamped position points with
+  latitude, longitue and altitude. Every position point is associated to a
+  particular aircraft, identified by a unique ICAO code.
+  \item \textbf{Flight detection}: the unstructured position points are analyzed
+  per aircraft (per ICAO), and grouped together to extract single discrete
+  flights. For each detected flight, departure and arrival airports are
+  computed.
+  \item \textbf{Route detection}: flights are grouped by pair of departure and
+  arrival airport, and sent to an aggregative clustering algorithm that is used
+  to identify standard routes and routes that diverge from them.
+\end{enumerate}
+
+These three phases are explained in more detail in the sections that follow.
+
+\subsection{Positions}
 
 Decoding the position of an aircraft from ADS-B position messages is more
 complicated than one would expect. Information on latitude and longitude is
@@ -131,9 +154,7 @@ that follow, as we were not able to detect flights between two different days.
 From our observations, however, we concluded that these flights are not very
 frequent, so at the end of the day the final results did not suffer too much.
 
-\subsubsection{Flights}
-
-\paragraph{Identification of discrete flights}
+\subsection{Flights}
 
 Having extracted all position information from the raw avro files, there is now
 the problem of identifying discrete flights from it.
@@ -175,7 +196,7 @@ flight being below 3000 m is the most important one for our purposes (as
 explained below), and also the one that seems to filter out the majority of
 potential flights.
 
-\paragraph{Departure and arrival airports}
+\subsubsection{Departure and arrival airports}
 
 A flight is given by a sequence of positions, as well as departure and arrival
 airports. There two last informations, however, are not provided by the data and
@@ -189,11 +210,10 @@ contained much more data than we needed, as it also listed small non-commercial
 airports. In order for our algorithm to be reasonably correct, we had to trim
 the dataset first removing the airports without a IATA code, and then keeping
 only commercial airports with the help of an external list we found on the
-Internet. This filtering reduced the list from XXX to XXX entries.
+Internet. This filtering reduced the list from 6977 to 639 entries.
 The resulting number of entries is still a little bit high for our purposes, but
 it was nevertheless the best dataset we could get. The alternative would have
 been to build a dataset by hand, which seemed extremely time consuming.
-% TODO ^^^^^^^^^^
 
 We specifically set the threshold of 3000 m in the flight detection algorithm
 for purpose of airport detection: after some observations of read flights on the
@@ -214,7 +234,7 @@ external dataset. It is of couse not perfect, for two main reasons:
 Having considered these issues, we still settled for the simplest solution, as
 we did not find alternative ways to detect airports given the data available.
 
-\paragraph{Sectors}
+\subsubsection{Sectors}
 
 The route detection algorithm, as explained in details below, uses a
 representation of flights and routes as a sequence of sectors, where each sector
@@ -242,7 +262,7 @@ longitude represent the same sector, and are compressent into one. This process
 yields sectors of about 10 km by 10 km, which is a good approximation for our
 purposes, where sub-kilometer precision is not needed.
 
-\subsubsection{Routes}
+\subsection{Routes}
 
 The most important part of the process is the detection of routes between pairs
 of airports. Standard routes between a pair airports are likely to be used by
@@ -321,7 +341,7 @@ implementation of the algorithm:
   of data available in the detection.
 \end{itemize}
 
-\paragraph{Clustering algorithm}
+\subsubsection{Clustering algorithm}
 
 Routes, both standard and nonstandard, are determined separately for each
 ordered pair of airports. The pairs are ordered in the sense that routes from
@@ -372,6 +392,13 @@ values, together with the editing distance, determine the distance between two
 routes. The threshold at the heart of the algorithm, as well as the other
 parameters, have been fine-tuned with experimentations and
 observation of the results.
+
+To aid the visualization, we consider ``diverging clusters'' instead of
+diverging flights. After the clustering process, all clusters different from the
+one selected as standard are diverging clusters. We then display the
+representatives of the diverging clusters as the diverging routes for each
+airport. The rationale is simply that routes in the same cluster are close
+enough to be abstracted by a single representative of the entire group.
 
 \subsubsection{CO2 consumption}
 
@@ -474,9 +501,7 @@ icaos without a proper airline code are likely to correspond to private airplane
 yielding a pretty good coverage of the western Europe area. Some areas are
 covered almost perfectly, and for those we were able to detect flight accurately.
 
-  * What are the standard routes?
-
-The results from the complete execution of the algorithm are quite good.
+The results from the complete execution of the algorithm are mixed.
 It should be considered that there are a lot of minor airports, and flight
 information for those airports is, as one could expect, incomplete.
 Of 1165 of the total combinations of airports, about 85 \% of them has their
@@ -486,15 +511,16 @@ necessarily to be considered pretty low. For major airports, however, the
 available data rises significantly. As an example, the standard route between
 Schiphol and London Gatwick and converse has been determined by 39,
 respectively 42 routes.
-  
-% TODO say something about the distance function
 
-
-  * Which flights and airlines diverge from them? In which airports?
-  * How much CO2 would be saved if aircrafts followed a straight-line route
-    instead of the standard one?
-    
-* Is it possible to determine flights from raw adsb data?
+Tuning the distance function for the route clustering phase was more challanging
+than we expected. In many cases, the algorithm ended up considering as diverging
+routes that were actually very close to the standard one. We can conclude,
+therefore, that even though we think we were able to determine standard routes
+with acceptable accuracy and confidence for medium to big airports, diverging
+routes detection still has some issues. We do think that the approach of using
+sectors and editing distance can give good results in this context, but the
+distance function obviously needs much more experiments are fine-tuning to be
+able to give good results in all situations.
 
 Observing our results, we conclude that it is definitely possible to
 identify flights with acceptable reliability using raw ADS-B data alone. There
@@ -511,23 +537,28 @@ significant effort would be to asses the correctness of the route clustering
 algorithm with a precompiled dataset of standard routes.
 
 The next step would be to improve the algorithms, by making them more clever and
-use more data from the dataset in a better way. The flight detection algorithm
-could be improved by using an external dataset relating callsigns, which are
-amost fully available from the data, to flights. At the time of writing we are
-not aware of such dataset being publicly available, but there could be in the
-future. Also, our flight detection algorithm does not take velocity messages
-into account. Velocity information is not vital in flights detection, but we do
-not exclude that the heading information of an aircraft could be combined with
-its altitude information to better recognize ascents and descents.
-The grouping criteria in our flight detection are quite restrictive,
-to be able to get sufficiently reliable outputs with a relatively simple
-algorithm. These criteria can surely be made less restrictive, using some more
-advanced techniques to make up for missing points.
+use more data from the dataset in a better way. A trivial but effective
+improvement to all phases of the algorithm follows, clearly, from increasing
+the number of flights available to them.
+
+The flight detection algorithm could be improved by using an external dataset
+relating callsigns, which are amost fully available from the data, to flights.
+At the time of writing we are not aware of such dataset being publicly
+available, but there could be in the future. Also, our flight detection
+algorithm does not take velocity messages into account. Velocity information is
+not vital in flights detection, but we do not exclude that the heading
+information of an aircraft could be combined with its altitude information to
+better recognize ascents and descents. The grouping criteria in our flight
+detection are quite restrictive, to be able to get sufficiently reliable outputs
+with a relatively simple algorithm. These criteria can surely be made less
+restrictive, using some more advanced techniques to make up for missing points.
 
 There is room for improvement in the route detection algorithm, for example
 by tuning the way routes are clustered together, and in particular by selecting
-a better distance function. Another improvement would also come naturally by
-increasing the number of flights available to the analysis.
+a better distance function.
+A possible alternative way to compute the distance could be to compute the area
+delimited by two routes. This area, normalized according to the length of the
+routes, could be a good estimate of how ``different'' two routes are.
 A different approach could be to discard the current algorithm and instead use
 an external dataset of standard routes. In this setting, standard routes need
 not be computed. Flights that diverge from them can simply be discovered by
