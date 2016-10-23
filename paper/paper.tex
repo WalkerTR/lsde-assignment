@@ -107,6 +107,12 @@ the project:
 % spark, scala, etc
 % python, haskell for scripting, etc
 
+Analyzing the entire dataset require a big computational power, therefore use a cluster to perform analyze the data. However, before running on the cluster, we tried the algorithms locally on a small subset of data to test correctness end efficiency and to obtain statistics. For this reason, we used different technologies depending on where we ran the analysis.
+
+On the cluster, we chose to use \textit{Apache Spark} because it is extremely fast while providing an easy interface, resulting suitable for our application. In particular, the \textit{Scala} version was chosen instead of PySpark because of the strongly typing and the functional programming approach. In addition to this, the Java library \textit{libadsb} was used to decode the position messages.
+
+Locally, in addition to \textit{Scala} we used \textit{Haskell} and \textit{Python} as scripting languages. The first one was suitable for data manipulation and algorithms testing, while the second one offers a convenient way to plot data using the library \textit{Matplotlib}.
+
 \subsection{Algorithm overview}
 
 Our processing algorithm is composed of three phases that are executed in
