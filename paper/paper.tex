@@ -3,7 +3,6 @@
 \usepackage{graphicx}
 \usepackage[style=numeric,backend=bibtex]{biblatex}
 
-
 \addbibresource{bibliography.bib}
 
 \title{Title goes here}
@@ -14,7 +13,6 @@
 \maketitle
 
 \section{Introduction}
-% what is this project about and why is it interesting?
 
 The number of flying airplane has increased much in the last decade. This led to
 many problems, mostly related to security and air traffic controls. It was clear
@@ -493,21 +491,21 @@ algorithm must be executed for each pair of airports, so it sufficies to
 distribute the data among the nodes by pair of airports.
 
 Our approach of clustering together routes represented as sequences of sectors
-is inspired by the Leader Algorithm described in [reference], but differs from
-it in some ways. Sectors in [reference] are bounded airspace regions under the
-control of a single air traffic controller or small team, hence they cover a
-relatively large area. Flights with such subdivision usually go through 5--10
-sectors. Our sectors are smaller --- each flight has approximately 20--40 of
-them --- therefore they represent a much more fine-grained subdivision of the
-world map.
+is inspired by the Leader Algorithm described in \cite{routeclustering}, but
+differs from it in some ways. Sectors in \cite{routeclustering} are bounded
+airspace regions under the control of a single air traffic controller or small
+team, hence they cover a relatively large area. Flights with such subdivision
+usually go through 5--10 sectors. Our sectors are smaller --- each flight has
+approximately 20--40 of them --- therefore they represent a much more
+fine-grained subdivision of the world map.
 
-In [reference], distance between two routes is computed as a simple editing
-distance between a lexical representation of routes. With smaller sectors,
-however, comes the need to take other factors into account. An extreme example
-of why this is needed is given by two routes that are almost parallel and at
-distance of slightly more than 10 km. In our subdivision in sectors of 10 km by
-10 km, these two routes would end up represented by a sequence with almost no
-common sectors, even though they are actually very similar. A simple editing
+In \cite{routeclustering}, distance between two routes is computed as a simple
+editing distance between a lexical representation of routes. With smaller
+sectors, however, comes the need to take other factors into account. An extreme
+example of why this is needed is given by two routes that are almost parallel
+and at distance of slightly more than 10 km. In our subdivision in sectors of 10
+km by 10 km, these two routes would end up represented by a sequence with almost
+no common sectors, even though they are actually very similar. A simple editing
 distance function would assign the same value to this pair of routes, as well as
 another pair of routes much more distant and different from each other.
 
