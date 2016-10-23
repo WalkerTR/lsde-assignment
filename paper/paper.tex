@@ -45,19 +45,19 @@ airports, as well as flights that diverge from them.
 
 \subsection{OpenSky Network}
 
-Most aircrafts have equipped with an ADB-S transmitter, with which they send
-information about their status and the position continuously, to guarantee
+Most aircrafts are equipped with an ADB-S transmitter, with which they send
+information about their status and position continuously, to guarantee
 better air traffic control. These messages are not encripted and, in most regions,
 this technology will become mandatory in 2020. For these reasons OpenSky network
 has been created \cite{opensky}.
 
 OpenSky is an open source network that aggregates ADS-B messages collected by
-volunteers around the globe. The dataset is accessible to everyone for
+volunteers around the globe. The dataset is accessible by everyone for
 non-profit purposes and the data is provided in raw format, in order to
 perform research and statistics about air traffic. \\
 There are some limitation to the data that is collected by the network. Western
 Europe is well, but only partially covered. In areas where coverage is spotty or
-absent, it is not possible to detect complete airplanes informations.
+absent, it is not possible to detect complete airplane information.
 Additionally, messages are collected by volunteers and there are no guarantees
 about the reliability of the collected information.
 
@@ -101,7 +101,7 @@ sector is identified by a code, the string editing distance can be used to
 measure the distance between two different routes. The distance is therefore
 represented by the minimum number of operations -- insertion, deletion and
 replacement -- to transform Route 1 into Route 2 or vice-versa. Different weights
-can also be applied to different operations. The distance should not depend by
+can also be applied to different operations. The distance should not depend on
 the length of the routes and for this reason it is divided by the sum of
 the lengths of the routes. The final result represents the percentage of
 difference between the routes\cite{routeclustering}.
@@ -135,19 +135,19 @@ With this project, we aim to answer the following questions:
 
 To answer these questions, we are going to use a dataset of raw ADS-B messages
 encoded in AVRO format. This dataset provides information from the OpenSky
-network for a full week of September 2016. 
-The quantity of available messages is very high, but their content is missing
-some important informations about the flights, such as airlines and airports. It
-follows that there are other questions that must be faced in the development of
-the project:
+network for a full week of September 2016. The quantity of available messages is
+very high, but their content is missing some important informations about the
+flights, such as airlines and airports. It follows that there are other
+questions that must be answered in the development of the project:
 
 \begin{itemize}
   \item How to use raw ADS-B data to identify flights?
-  \item How to use raw ADS-B to discover additional properties of flights, such
+  \item How to use raw ADS-B data to discover additional properties of flights, such
   as associated airline or CO2 consumption of the aircraft?
   \item How to identify the departure and arrival airports of a flight?
   \item How to identify standard routes from an unstructured group of flights?
-  \item Is ADS-B data alone enough? Do we need external datasets?
+  \item Is ADS-B data alone enough to answer the above questions? Do we need
+  external datasets?
 \end{itemize}
 
 \section{Project Setup}
@@ -158,16 +158,15 @@ the project:
 % python, haskell for scripting, etc
 
 Analyzing the entire dataset requires a lot of computational power, hence the
-need to use a cluster to perform analysis on the data. However, before executing
-on the cluster, it is essential to be able to try the algorithms locally on a
-small subset of data, in order to test their correctness end efficiency, and to
-obtain useful statistics. For this reason, we used different technologies
-depending on where we ran the analysis.
+need to use a cluster to perform the computations on the entire dataset.
+However, before executing on the cluster, it is essential to be able to try the
+algorithms locally on a small subset of the data, in order to test their correctness
+end efficiency, and to obtain useful statistics.
 
 On the cluster, we chose to use \textit{Apache Spark} because it is extremely
 fast while providing an easy and convenient development interface. In
 particular, the \textit{Scala} version was chosen instead of PySpark because of
-the strongly typing and the functional programming approach. In addition to
+the strong typing and the functional programming approach. In addition to
 this, the Java library \textit{libadsb} was used to decode the raw ADS-B
 messages.
 
@@ -232,8 +231,8 @@ The position decoding algorithm goes through the following phases:
   \item Extract the raw messages and their timestamp from the avro-encoded data
   \item Decode the messages from the raw representation
   \item Filter out messages that are not position messages
-  \item Order the messages according to their timestamp
   \item Group the messages by ICAO
+  \item For each ICAO, order the messages according to their timestamp
   \item For each ICAO, go through the messages in order of timestamp and decode
   the positions
 \end{enumerate}
@@ -245,7 +244,7 @@ therefore running the above algorithm separately for each day that we had
 available in the dataset. This choice has obvious consequences on the phases
 that follow, as we were not able to detect flights between two different days.
 From our observations, however, we concluded that these flights are not very
-frequent, so at the end of the day the final results did not suffer too much.
+frequent, so the final results did not suffer too much.
 
 \subsection{Flights}
 
@@ -261,7 +260,7 @@ frequent, so at the end of the day the final results did not suffer too much.
   \label{fig:alts}
 \end{figure}
 
-Having extracted all position information from the raw avro files, there is now
+Having extracted all position information from the raw AVRO files, there is now
 the problem of identifying discrete flights from it.
 Given a sequence of positions for a given aircraft, on a particular day, we
 though about how to group this information in chunks, each chunk representing a
@@ -279,7 +278,7 @@ not considered good enough for our purposes.
 
 Position points for a given aircraft are thus grouped together according to a
 simple clustering algorithm: all points are analyzed in order of timestamp, and
-two subsequent points are considered belonging in the same cluster if and only
+two subsequent points are considered belonging to the same cluster if and only
 if they are no more than 20 minutes apart, their distance is no more than 20
 kilometers and their altitudes differ no more than 200 meters.
 
@@ -294,12 +293,12 @@ points which altitudes rise, respectively decrease, steadily for 2000 meters.
 We acknowledge that the criteria according to which we group and filter discrete
 flights are pretty restrictive, and that we inevitably throw away a lot of data
 and possibly some flights in the process. However, given the unreliability of
-the data and the difficult of our task, we wanted to deal with sufficiently
-precise and detailed data, in order to make our life easier in the subsequent
-phases of the processing. In particular, the restriction on the end points of a
-flight being below 3000 m is the most important one for our purposes (as
-explained below), and also the one that seems to filter out the majority of
-potential flights.
+the data and the difficulty of our task following from it, we wanted to deal
+with sufficiently precise and detailed data, in order to make our life easier in
+the next phases of the processing. In particular, the restriction on the end
+points of a flight being below 3000 m is the most important one for our purposes
+(as explained below), and unfortunately also the one that seems to filter out
+the majority of potential flights.
 
 \subsubsection{Departure and arrival airports}
 
@@ -351,7 +350,7 @@ we did not find alternative ways to detect airports given the data available.
 
 The route detection algorithm, as explained in details below, uses a
 representation of flights and routes as a sequence of sectors, where each sector
-represents portion of the world map. For this reason, the flights detection
+represents a portion of the world map. For this reason, the flights detection
 phase outputs flights as sequences of sectors rather than position points. This
 has two main advantages:
 
@@ -364,13 +363,13 @@ has two main advantages:
 
 We could have considered alternative ways to eliminate redundant information and
 reduce the amount of data needed to represent a single flight, but the routes
-detection algorithm would stil have transformed those representations to
+detection algorithm would still have transformed those representations to
 sequences of sectors. It follows that converting directly from position points
 to sectors was obviously the best approach.
 
 In practice, a sequence of position points is translated in a sequence of
 sectors by simply truncating the latitude and longitude part of a point to one
-decimal digit. Strings of values with the same truncated latitude and
+decimal digit. Contiguous sequences of values with the same truncated latitude and
 longitude represent the same sector, and are compressent into one. This process
 yields sectors of about 10 km by 10 km, which is a good approximation for our
 purposes, where sub-kilometer precision is not needed.
@@ -378,7 +377,7 @@ purposes, where sub-kilometer precision is not needed.
 \subsection{Routes}
 
 The most important part of the process is the detection of routes between pairs
-of airports. Standard routes between a pair airports are likely to be used by
+of airports. Standard routes between a pair of airports are likely to be used by
 the majority of flights between those airports. Our algorithm relies on the
 assumption that the converse should also be true, namely that if a route is used
 by the majority of flights going from an airport to another, than that route
@@ -395,7 +394,7 @@ each pair of airports:
   current pair of airports as endpoints.
   \item Select the cluster that classifies the highest number of routes.
   \item Select a route that constitues the representative of
-  that cluster as the one having the least distance between al the other
+  that cluster as the one having the least distance between all the other
   routes in the cluster
   \item The representative of this cluster determines the standard route
   between the pair of airports
@@ -423,14 +422,15 @@ assumption may be invalidated in two obvious ways, among possibly others:
   airplanes are forced to systematically deviate from a standard route, for a
   period of time that can span days or even months. These temporary anomalies
   clearly invalidate this assumption, and would go absolutely undetected by our
-  algorithm, especially since it gives information over just a week of time.
+  algorithm. This is especially true in settings like the one we were working in,
+  where information spans over a limited period of time.
 \end{itemize}
 
-These, however, are fundamental problems of the data we have available. They
+These, however, are fundamental problems of the data we use. They
 affect the results of the algorithm, but do not depend on it so they cannot be
 reduced using a more clever algorithm. We feel that, with the information
 available and in particular without an external source
-of standard routes, considering this assumption as true is the best
+of standard routes, considering the above assumption as true is the best
 possible approach.
 
 However, there are some issues that have to do with the particular
@@ -444,7 +444,7 @@ implementation of the algorithm:
   have few flights passing though it. A cluster with five routes would be
   selected against one with two or three, but clearly it does not have a strong
   argument in determining the standard route between two airports. There are two
-  possible approaches to this. The first is to recognize that the informations
+  possible approaches to this. The first is to recognize that the information
   available is not enough, and possibly leave some pairs of airports with
   undetermined standard routes. The other, and the one that we follow, is to
   just run the algorithm without taking into account how many routes are
@@ -486,7 +486,7 @@ differs from it in some ways. Sectors in \cite{routeclustering} are bounded
 airspace regions under the control of a single air traffic controller or small
 team, hence they cover a relatively large area. Flights with such subdivision
 usually go through 5--10 sectors. Our sectors are smaller --- each flight has
-approximately 20--40 of them --- therefore they represent a much more
+approximately 20--70 of them --- therefore they represent a much more
 fine-grained subdivision of the world map.
 
 In \cite{routeclustering}, distance between two routes is computed as a simple
@@ -525,7 +525,7 @@ enough to be abstracted by a single representative of the entire group.
   \label{fig:amsterdam-vatry}
 \end{figure}
 
-A little research showed that an average aircraft procudes about 53 pounds of
+A little research showed that an average aircraft produces about 53 pounds of
 carbon dioxide per mile. We used this value to compute the difference in CO2
 production between the standard routes and the corresponding straight-line
 route.
@@ -536,7 +536,7 @@ route on the map in different colors on a palette from greed to red, where hues
 towards red would indicate a point of high consumption in the route.
 To do this, we needed to attribute to each segment of the route a suitable value,
 from which we could determine its color. Rather than trying to compute a value
-of ``comsumption'' for each segment, we decided to determine it based on
+of ``consumption'' for each segment, we decided to determine it based on
 how different the route is with respect to the straight-line route. The main
 characteristic of a straight-line route is that the airplane always points to
 the destination airport. Therefore, we considered as value of each segment the
@@ -566,7 +566,7 @@ This of course made the next phases of the algorithm more tractable. Position
 data has then been processed by the flight detection algorithm, in about 24
 hours. This phase, as we already explained, throws away a lot of data. Also,
 flights are represented and saved to disk as sequences of sectors, where each
-flight it composed of 20--50 sectors. This gives a very succint representation,
+flight it composed of 20--70 sectors. This gives a very succint representation,
 and we were able to store the output of this phase in just about 4 MB per day.
 The small size of the flights data allowed us to run the route clustering
 algorithm and all the additional JSON files generation for the visualization in
@@ -596,7 +596,7 @@ classification algorithm, as well as to the incomplete information provided by
 the dataset. It should be recalled that, even though the OpenSky network
 comprises at the moment of 70 active sensors, some spots in the western Europe
 area may still be pooly covered, or not covered at all. Even a small poorly
-covered are makes all information on the flights passing through it incomplete,
+covered area makes all information on the flights passing through it incomplete,
 thus unsuitable for our analysis.
 
 It should also be considered that what our algorithm considers as a cluster is
@@ -639,7 +639,7 @@ an ideal dataset, every cluster corresponds to a flight.
 \subsection{Airlines}
 
 In order to compute the amount of flights diverging from a standard route per
-airline, we needed to associate a an airline to each flight. This is not a
+airline, we needed to associate an airline to each flight. This is not a
 completely trivial task, as airline information is not provided at all by the
 data. Every aircraft, hence every flight, has an ICAO number associated to it,
 from which it is possible to determine callsigns from the identification
@@ -660,7 +660,7 @@ ICAOs without a proper airline code are likely to correspond to private airplane
 
 %%% nondiverging vs diverging flights
 
-We were able to associate an airline to almost all of the flights the resulted
+We were able to associate an airline to almost all of the flights that resulted
 from the route clustering phase. From this information, we then determined how
 many flights, per airline, follow and do not follow the standard route for their
 particular pair of airports, as identified by our standard route detection.
@@ -741,6 +741,12 @@ of using sectors and editing distance can give good results in this context, but
 the distance function obviously needs more experiments are fine-tuning to
 be able to give good results in all situations.
 
+As a final note, we were also able to conlude that ADS-B data alone is not
+enough to extract information that is sufficiently relevant to other
+applications. The large-scale data sets provided by OpenSky are extremely
+useful, but additional sources of information are necessary if one wants to make
+sense of their raw, unstructured data.
+
 \section{Future work}
 
 We find that the accuracy of many of our algorithms is difficult to assess,
@@ -769,21 +775,21 @@ restrictive, using some more advanced techniques to make up for missing points.
 There is room for improvement in the route detection algorithm, for example
 by tuning the way routes are clustered together, and in particular by selecting
 a better distance function.
-A possible alternative way to compute the distance could be to compute the area
+A possible alternative way to estimate the distance could be to compute the area
 delimited by two routes. This area, normalized according to the length of the
-routes, could be a good estimate of how ``different'' two routes are.
+routes, could be a good indication of how ``different'' two routes are.
 A different approach could be to discard the current algorithm and instead use
 an external dataset of standard routes. In this setting, standard routes need
 not be computed. Flights that diverge from them can simply be discovered by
 computing the distance from the standard route for the particular pair of
 airports, and checking the result against a threshold.
 
-Currently, the CO2 consumption for the flights is computed in a very simple way,
-by multiplying the distance traveled by the airplanes by an estimate of the
+Currently, the CO2 consumption for the flights is determined in a very simple
+way, by multiplying the distance traveled by the airplanes by an estimate of the
 quantity of CO2 that an average aircraft produces per mile. A better approach
 could use the ICAO number of each single aircraft to index an external dataset
-and discover its characteristics. These properties could be used to compute a
-more precise and realistic estimate of CO2 production.
+containing its characteristics. These properties could be used to compute a
+more precise and realistic estimate of CO2 production for each single aircraft.
 
 \printbibliography
 
