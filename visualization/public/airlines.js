@@ -1,1 +1,123 @@
-var airlines = [{"name":"Aerodienst GmbH","nDiverging":1},{"name":"Airbus Industrie","nDiverging":3},{"name":"Air Berlin","nDiverging":16},{"name":"Austrian Airlines","nDiverging":1},{"name":"Alitalia","nDiverging":23},{"name":"Air Transat","nDiverging":1},{"name":"British Airways","nDiverging":2},{"name":"Croatia Airlines","nDiverging":2},{"name":"Czech Airlines","nDiverging":6},{"name":"Ethiopian Airlines","nDiverging":1},{"name":"European Air Transport","nDiverging":22},{"name":"Eurowings","nDiverging":1},{"name":"easyJet","nDiverging":15},{"name":"Federal Express","nDiverging":2},{"name":"Germanwings","nDiverging":20},{"name":"KLM Royal Dutch Airlines","nDiverging":13},{"name":"Lufthansa","nDiverging":42},{"name":"Lufthansa Cargo","nDiverging":1},{"name":"Luxair","nDiverging":3},{"name":"MNG Airlines","nDiverging":1},{"name":"Neos","nDiverging":1},{"name":"Qatar Airways","nDiverging":1},{"name":"Ryanair","nDiverging":24},{"name":"Swiss International Air Lines","nDiverging":14},{"name":"Swissair","nDiverging":14},{"name":"Stuttgarter Flugdienst","nDiverging":1},{"name":"Thomsonfly","nDiverging":1},{"name":"Tiphook PLC","nDiverging":2},{"name":"United Parcel Service","nDiverging":1},{"name":"Vistajet","nDiverging":1},{"name":"Vueling Airlines","nDiverging":9},{"name":"Wizz Air","nDiverging":6}]
+var airlines = 
+[
+    {
+        "diverging": 3,
+        "name": "Luxair",
+        "nonDiverging": 24
+    },
+    {
+        "diverging": 1,
+        "name": "Neos",
+        "nonDiverging": 5
+    },
+    {
+        "diverging": 1,
+        "name": "Qatar Airways",
+        "nonDiverging": 3
+    },
+    {
+        "diverging": 20,
+        "name": "Ryanair",
+        "nonDiverging": 124
+    },
+    {
+        "diverging": 38,
+        "name": "Swiss International Air Lines",
+        "nonDiverging": 794
+    },
+    {
+        "diverging": 3,
+        "name": "Airbus Industrie",
+        "nonDiverging": 2
+    },
+    {
+        "diverging": 7,
+        "name": "Austrian Airlines",
+        "nonDiverging": 157
+    },
+    {
+        "diverging": 39,
+        "name": "Alitalia",
+        "nonDiverging": 412
+    },
+    {
+        "diverging": 2,
+        "name": "British Airways",
+        "nonDiverging": 12
+    },
+    {
+        "diverging": 16,
+        "name": "European Air Transport",
+        "nonDiverging": 88
+    },
+    {
+        "diverging": 25,
+        "name": "Air Berlin",
+        "nonDiverging": 272
+    },
+    {
+        "diverging": 3,
+        "name": "Tiphook PLC",
+        "nonDiverging": 2
+    },
+    {
+        "diverging": 22,
+        "name": "Vueling Airlines",
+        "nonDiverging": 40
+    },
+    {
+        "diverging": 4,
+        "name": "Czech Airlines",
+        "nonDiverging": 42
+    },
+    {
+        "diverging": 2,
+        "name": "Croatia Airlines",
+        "nonDiverging": 27
+    },
+    {
+        "diverging": 3,
+        "name": "Wizz Air",
+        "nonDiverging": 18
+    },
+    {
+        "diverging": 38,
+        "name": "Lufthansa",
+        "nonDiverging": 1329
+    },
+    {
+        "diverging": 6,
+        "name": "Ethiopian Airlines",
+        "nonDiverging": 3
+    },
+    {
+        "diverging": 2,
+        "name": "Eurowings",
+        "nonDiverging": 33
+    },
+    {
+        "diverging": 15,
+        "name": "easyJet",
+        "nonDiverging": 108
+    },
+    {
+        "diverging": 3,
+        "name": "Federal Express",
+        "nonDiverging": 20
+    },
+    {
+        "diverging": 1,
+        "name": "Stuttgarter Flugdienst",
+        "nonDiverging": 2
+    },
+    {
+        "diverging": 18,
+        "name": "Germanwings",
+        "nonDiverging": 191
+    },
+    {
+        "diverging": 14,
+        "name": "KLM Royal Dutch Airlines",
+        "nonDiverging": 203
+    }
+]
