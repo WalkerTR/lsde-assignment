@@ -16,20 +16,40 @@
 \section{Introduction}
 % what is this project about and why is it interesting?
 
-The number of flying airplane has increased much in the last decade. This led to many problems, mostly related to security and air traffic controls. It was clear that radar surveillance systems would not be sufficient to monitor flights, since airplanes are passive entity. With the introduction of new technologies, a new standard called ADS-B has been developed to actively monitor aircrafts and manage routings.
+The number of flying airplane has increased much in the last decade. This led to
+many problems, mostly related to security and air traffic controls. It was clear
+that radar surveillance systems would not be sufficient to monitor flights,
+since airplanes are passive entity. With the introduction of new technologies, a
+new standard called ADS-B has been developed to actively monitor aircrafts and
+manage routings.
 
-\textit{Automatic Dependant Surveillance - Broadcast} (ADS-B) is the last generation standard for air traffic monitoring. The main idea of this technology is that each aircraft broadcast its position and status using internal sensors, without relying on external entities. On the other side, each airplane is able to receive the messages and detect the position of other vehicle autonomously, thus maintening a minimum distance and avoiding collision.
+\textit{Automatic Dependant Surveillance - Broadcast} (ADS-B) is the last
+generation standard for air traffic monitoring. The main idea of this technology
+is that each aircraft broadcast its position and status using internal sensors,
+without relying on external entities. On the other side, each airplane is able
+to receive the messages and detect the position of other vehicle autonomously,
+thus maintening a minimum distance and avoiding collision.
 
-ADS-B messages are sent without any encryption and can be received and decoded by everyone. Morover this equipment will be mandatory in 2017 in most countries. We obtained a dataset, provided by OpenSky network, containing all the ADS-B messages sent by airplanes and collected by volunteers. The dataset includes data about flights from the 18\textsuperscript{th} September 2016 to the 24\textsuperscript{th} September 2016 and collected by about 70 sensors spread across Europe.
+ADS-B messages are sent without any encryption and can be received and decoded
+by everyone. Morover this equipment will be mandatory in 2017 in most countries.
+We obtained a dataset, provided by OpenSky network, containing all the ADS-B
+messages sent by airplanes and collected by volunteers. The dataset includes
+data about flights from the 18\textsuperscript{th} September 2016 to the
+24\textsuperscript{th} September 2016 and collected by about 70 sensors spread
+across Europe.
 
-In this paper we explain our analysis of such dataset, starting from the decoding of the position. The main goals of this project are:
+In this paper we explain our analysis of such dataset, starting from the
+decoding of the position. The main goals of this project are:
 \begin{itemize}
   \item Detecting the standard routes between all the pairs of airports;
   \item Detecting abnormal routes between pairs of airports;
-  \item Calculate the wastage of fuel travelling through the standard route instead of flying over a straight line.
+  \item Calculate the wastage of fuel travelling through the standard route
+  instead of flying over a straight line.
 \end{itemize}
 
-We will show that, though most standard routes are really close to the straight line, there are some routes that are clearly away from it. Moreover, for some couples of airports, there are few routes that differ from the standard one.
+We will show that, though most standard routes are really close to the straight
+line, there are some routes that are clearly away from it. Moreover, for some
+couples of airports, there are few routes that differ from the standard one.
 
 \section{Related Work}
 % meaningfully summarize related literature to explain what this project builds
@@ -38,39 +58,78 @@ We will show that, though most standard routes are really close to the straight 
 
 \subsection{OpenSky Network}
 
-Most of aircraft are provided with ADB-S transmitter, which send continuosly information about the status and the position of the aircraft to guarantee better air traffic control. The messages are not encripted and, in most region, this technology will become mandatory in 2020. For these reasons OpenSky network was recently born.
+Most of aircraft are provided with ADB-S transmitter, which send continuosly
+information about the status and the position of the aircraft to guarantee
+better air traffic control. The messages are not encripted and, in most region,
+this technology will become mandatory in 2020. For these reasons OpenSky network
+was recently born.
 
-OpenSky is an open source network that aggregates ADS-B messages collected by volunteers around the globe. The dataset is accessible to everyone for non-profit purposes and the data is provided in the raw format, in order to perform research and statistics about air traffic. \\
-However there are some limitation to the data. Only part of Europe has a good coverage, which means there are many areas where is not yet possible to detect airplanes informations. Furthermore messages are collected by volunteers and there is not guarantee that antennas are working properly 24/7.
+OpenSky is an open source network that aggregates ADS-B messages collected by
+volunteers around the globe. The dataset is accessible to everyone for
+non-profit purposes and the data is provided in the raw format, in order to
+perform research and statistics about air traffic. \\
+However there are some limitation to the data. Only part of Europe has a good
+coverage, which means there are many areas where is not yet possible to detect
+airplanes informations. Furthermore messages are collected by volunteers and
+there is not guarantee that antennas are working properly 24/7.
 
-    \subsubsection{ADS-B messages}
+\subsubsection{ADS-B messages}
 
-    The ADS-B standard defines different kinds of messages which are sent at different frequencies:
+The ADS-B standard defines different kinds of messages which are sent at
+different frequencies:
 
-    \begin{itemize}
-        \item \textit{Aircraft identification} messages contain the callsign of the airplane;
-        \item \textit{Airborne position} messages contain altitude, latititude and longitude of the airplane and are sent twice per second;
-        \item \textit{Airborne velocity} messages contain climb rate and velocity of the airplane.
-    \end{itemize}
+\begin{itemize}
+  \item \textit{Aircraft identification} messages contain the callsign of the
+  airplane;
+  \item \textit{Airborne position} messages contain altitude, latititude and
+  longitude of the airplane and are sent twice per second;
+  \item \textit{Airborne velocity} messages contain climb rate and velocity of
+  the airplane.
+\end{itemize}
 
-    In addition to these messages, other emergencies, priority, capability, navigation accuracy category, and operational modes messages could be broadcasted.
+In addition to these messages, other emergencies, priority, capability,
+navigation accuracy category, and operational modes messages could be
+broadcasted.
 
 \subsection{Routes detection}
 
-A way to reduce the number of air routes is illustrated in \textit{J. DeArmon et al, Air Route Clustering for a Queuing Network Model of the National Airspace System}. The research showed that similar routes can be grouped to reduce the number of path between a pair of airports thus decrease air traffic congestion. The same approach could be used to detect standard routes where aircraft fly, given the departure and arrival airports. The first prototype of this model has been developed to improve the air traffic flow in the National Airspace System of the USA.
+A way to reduce the number of air routes is illustrated in \textit{J. DeArmon et
+  al, Air Route Clustering for a Queuing Network Model of the National Airspace
+  System}. The research showed that similar routes can be grouped to reduce the
+number of path between a pair of airports thus decrease air traffic congestion.
+The same approach could be used to detect standard routes where aircraft fly,
+given the departure and arrival airports. The first prototype of this model has
+been developed to improve the air traffic flow in the National Airspace System
+of the USA.
 
-    \subsubsection{Routes distance}
+\subsubsection{Routes distance}
 
-    Routes are represented by an ordered list of the geographical sectors where the aircrafts transit. Prior to define the clustering algorithm, it is important to define how to measure the distance between two different routes. Since each sector is identified by a code, the string editing distance can be used to measure the distance between two different routes. The distance is therefore represented by the minimum number of operation -- insertion, deletion and replacement -- to transform Route 1 into Route 2 or vice-versa. Different weight can also be applied to different operations. The distance should not depend by the length of the routes and for this reason it is then divided by the sum of the lengths of the routes. The final result represent the percentage of difference between the routes.
+Routes are represented by an ordered list of the geographical sectors where the
+aircrafts transit. Prior to define the clustering algorithm, it is important to
+define how to measure the distance between two different routes. Since each
+sector is identified by a code, the string editing distance can be used to
+measure the distance between two different routes. The distance is therefore
+represented by the minimum number of operation -- insertion, deletion and
+replacement -- to transform Route 1 into Route 2 or vice-versa. Different weight
+can also be applied to different operations. The distance should not depend by
+the length of the routes and for this reason it is then divided by the sum of
+the lengths of the routes. The final result represent the percentage of
+difference between the routes.
 
-    \subsubsection{Routes clustering}
+\subsubsection{Routes clustering}
 
-    Given a distance measure for each couple of routes, it is necessary to define a clustering algorithm to group them. Many methods has been tried during the research and the \textit{Leader algorithm} showed the best results. It proceed as follows:
-    \begin{enumerate}
-      \item A random route is assigned as leader of a new cluster;
-      \item All the other routes which distance from the leader is less than a threshold are assigned to the cluster;
-      \item Repeat the steps with the remaining routes until all routes are assigned to a cluster.
-    \end{enumerate}
+Given a distance measure for each couple of routes, it is necessary to define a
+clustering algorithm to group them. Many methods has been tried during the
+research and the \textit{Leader algorithm} showed the best results. It proceed
+as follows:
+
+\begin{enumerate}
+  \item A random route is assigned as leader of a new cluster;
+  \item All the other routes which distance from the leader is less than a
+  threshold are assigned to the cluster;
+  \item Repeat the steps with the remaining routes until all routes are assigned
+  to a cluster.
+\end{enumerate}
 
 \section{Research Questions}
 % which questions is this project trying to answer, and/or hypotheses to
@@ -111,11 +170,23 @@ the project:
 % spark, scala, etc
 % python, haskell for scripting, etc
 
-Analyzing the entire dataset require a big computational power, therefore use a cluster to perform analyze the data. However, before running on the cluster, we tried the algorithms locally on a small subset of data to test correctness end efficiency and to obtain statistics. For this reason, we used different technologies depending on where we ran the analysis.
+Analyzing the entire dataset require a big computational power, therefore use a
+cluster to perform analyze the data. However, before running on the cluster, we
+tried the algorithms locally on a small subset of data to test correctness end
+efficiency and to obtain statistics. For this reason, we used different
+technologies depending on where we ran the analysis.
 
-On the cluster, we chose to use \textit{Apache Spark} because it is extremely fast while providing an easy interface, resulting suitable for our application. In particular, the \textit{Scala} version was chosen instead of PySpark because of the strongly typing and the functional programming approach. In addition to this, the Java library \textit{libadsb} was used to decode the position messages.
+On the cluster, we chose to use \textit{Apache Spark} because it is extremely
+fast while providing an easy interface, resulting suitable for our application.
+In particular, the \textit{Scala} version was chosen instead of PySpark because
+of the strongly typing and the functional programming approach. In addition to
+this, the Java library \textit{libadsb} was used to decode the position
+messages.
 
-Locally, in addition to \textit{Scala} we used \textit{Haskell} and \textit{Python} as scripting languages. The first one was suitable for data manipulation and algorithms testing, while the second one offers a convenient way to plot data using the library \textit{Matplotlib}.
+Locally, in addition to \textit{Scala} we used \textit{Haskell} and
+\textit{Python} as scripting languages. The first one was suitable for data
+manipulation and algorithms testing, while the second one offers a convenient
+way to plot data using the library \textit{Matplotlib}.
 
 \subsection{Algorithm overview}
 
@@ -530,7 +601,7 @@ results of the algorithm several times, and improve its performance and results.
 We carried out some experiments on the results of the various phases and
 algorithms, in order to asses their behaviour. Some statistic data collected in
 the flight detection phase show how our classification criteria turned out to be
-pretty restrictive, as expected.
+pretty restrictive, as expected. The collected data is showed in Table~\ref{table}.
 
 This result should be attributed to the restrictive criteria of the
 classification algorithm, as well as to the incomplete information provided by
@@ -555,6 +626,8 @@ an ideal dataset, every cluster corresponds to a flight.
   \centering
   \begin{tabular}{|c|c|c|}
   \hline
+  \textbf{Day in dataset} & \textbf{Clusters} & \textbf{Detected flights} \\
+  \hline
   18/09/2016 & 199030 & 1219 \\
   \hline
   19/09/2016 & 170594 & 1103 \\
@@ -571,6 +644,7 @@ an ideal dataset, every cluster corresponds to a flight.
   \hline
   \end{tabular}
   \caption{Number of clusters and flights per day}
+  \label{table}
 \end{table}
 
 \paragraph{Airlines}
