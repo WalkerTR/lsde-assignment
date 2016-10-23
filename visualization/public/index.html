@@ -37,14 +37,16 @@
       $(function () {
 
         var dataset = airlines.map(function (el) {
-          return [el.name, el.diverging];
+          return [el.name, el.nonDiverging, el.diverging, Math.floor(100 * el.diverging/(el.nonDiverging+el.diverging))];
         });
 
         $('#table-airlines').DataTable( {
             data: dataset,
             columns: [
                 { title: "Airlines" },
-                { title: "Diverging flights" }
+                { title: "Standard flights" },
+                { title: "Diverging flights" },
+                { title: "Diverging over total", render: function (text) {return text + '%';} }
             ]
         } );
 
