@@ -79,7 +79,7 @@
         });
 
         // filling combo boxes
-        diverging_routes
+        std_routes
           .map(function (route) {
             return route.departureCode;
           })
@@ -137,7 +137,7 @@
 
           select.innerHTML = '<option value="">Choose an airport</option>';
 
-          diverging_routes
+          std_routes
             .filter(function (route) {
               return route.departureCode === departure;
             })
