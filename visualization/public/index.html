@@ -78,6 +78,14 @@
           map_fuel.invalidateSize(false);
         });
 
+        std_routes = std_routes.filter(function (route) {
+          return route.arrivalCode !== route.departureCode;
+        });
+
+        diverging_routes = diverging_routes.filter(function (route) {
+          return route.arrivalCode !== route.departureCode;
+        });
+
         // filling combo boxes
         std_routes
           .map(function (route) {
