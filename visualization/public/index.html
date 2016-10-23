@@ -29,6 +29,7 @@
     <script src="diverging_routes.js"></script>
     <script src="std_routes.js"></script>
     <script src="airports.js"></script>
+    <script src="co2.js"></script>
 
 
     <!-- app -->
@@ -201,10 +202,8 @@
 
         // arrival selected
         $('#select-arrival-diverging').change(function () {
-          if (map_diverging_layer) {
+          if (map_diverging_layer)
             map_diverging_layer.remove();
-            map_diverging_layer = null;
-          }
 
           map_diverging_layer = L.layerGroup().addTo(map_diverging);
 
@@ -250,10 +249,11 @@
         });
 
         $('#select-arrival-fuel').change(function () {
-          if (map_fuel_layer) {
+          if (map_fuel_layer)
             map_fuel_layer.remove();
-            map_fuel_layer = null;
-          }
+
+          document.getElementById('co2-straight').innerHTML = '';
+          document.getElementById('co2-route').innerHTML = '';
 
           map_fuel_layer = L.layerGroup().addTo(map_fuel);
 
@@ -273,6 +273,16 @@
 
           var destination = route.route.slice(-1).pop();
 
+          var co2_production = co2.filter(function (route) {
+              return route.depCode === departure &&
+                     route.arrCode === arrival;
+          }).pop();
+
+          if (co2_production) {
+            document.getElementById('co2-straight').innerHTML = Math.floor(co2_production.straightLineProduction) + ' lbs';
+            document.getElementById('co2-route').innerHTML = Math.floor(co2_production.routeProduction) + ' lbs';
+          }
+
           // plot straight line
           var options = {
             color: 'black'
@@ -282,7 +292,7 @@
             destination
           ];
 
-          L.polyline(points, options).addTo(map_fuel_layer);
+          L.polyline(points, options).addTo(map_fuel_layer).bindPopup('Hello');
 
           var coords = [];
 
@@ -368,6 +378,16 @@
               <label for="select-arrival-fuel">Arrival</label>
               <select id="select-arrival-fuel" class="form-control" name="airport-fuel">
               </select>
+            </div>
+            <div class="col-xs-4">
+              <div class="col-xs-6">
+                <h5>CO2 straight line:</h5>
+                <h5>CO2 standard route:</h5>
+              </div>
+              <div class="col-xs-6">
+                <h5 id="co2-straight"></h5>
+                <h5 id="co2-route"></h5>
+              </div>
             </div>
           </div>
 
