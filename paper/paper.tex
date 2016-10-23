@@ -74,17 +74,30 @@ A way to reduce the number of air routes is illustrated in \textit{J. DeArmon et
 % technological side (aptness of the tools for the job, scalability of the
 % solution).
 
+With this project, we aim to answer the following questions:
+
 \begin{itemize}
-  \item What are the standard routes?
+  \item What are the standard routes between pairs of airports?
   \item Which flights and airlines diverge from them? In which airports?
   \item How much CO2 would be saved if aircrafts followed a straight-line route
   instead of the standard one?
 \end{itemize}
 
-Additionally
+To answer these questions, we are going to use a dataset of raw ADS-B messages
+encoded in AVRO format. This dataset provides information from the OpenSky
+network for a full week of September 2016. 
+The quantity of available messages is very high, but their content is missing
+some important informations about the flights, such as airlines and airports. It
+follows that there are other questions that must be faced in the development of
+the project:
 
 \begin{itemize}
   \item How to use raw ADS-B data to identify flights?
+  \item How to use raw ADS-B to discover additional properties of flights, such
+  as associated airline or CO2 consumption of the aircraft?
+  \item How to identify the departure and arrival airports of a flight?
+  \item How to identify standard routes from an unstructured group of flights?
+  \item Is ADS-B data alone enough? Do we need external datasets?
 \end{itemize}
 
 \section{Project Setup}
@@ -97,7 +110,7 @@ Additionally
 \subsection{Algorithm overview}
 
 Our processing algorithm is composed of three phases that are executed in
-sequence. The output of a phase is the input of the next. The process starts
+sequence; the output of a phase is the input of the next. The process starts
 from a dataset of raw ADS-B messages encoded in AVRO format, and ends producing
 the data necessary to answer our research questions. The phases are the
 following:
@@ -558,10 +571,7 @@ icaos without a proper airline code are likely to correspond to private airplane
 
 \paragraph{Diverging flights}
 
-
 %%% nondiverging vs diverging flights
-
-
 
 \section{Conclusion}
 % revisit the research questions and hypotheses and try to answer them. Any new
@@ -578,11 +588,16 @@ icaos without a proper airline code are likely to correspond to private airplane
   \label{fig:schiphol-linate}
 \end{figure}
 
-... The OpenSky network counts 70 active sensors at the time of development,
+The OpenSky network counts 70 active sensors at the time of development,
 yielding a pretty good coverage of the western Europe area. Some areas are
 covered almost perfectly, and for those we were able to detect flight accurately.
+Observing our results, we conclude that it is definitely possible to
+identify flights with acceptable reliability using raw ADS-B data alone. There
+are however some issues with the data that make this effort less than
+trivial, and some advanced techniques as well as other data sources may be
+needed to determine them with more than average accuracy.
 
-The results from the complete execution of the algorithm are mixed.
+The results from the execution of the route detection algorithm are mixed.
 It should be considered that there are a lot of minor airports, and flight
 information for those airports is, as one could expect, incomplete.
 Of 1165 of the total combinations of airports, about 85 \% of them has their
@@ -594,20 +609,14 @@ Schiphol and London Gatwick and converse has been determined by 39,
 respectively 42 routes.
 
 Tuning the distance function for the route clustering phase was more challanging
-than we expected. In many cases, the algorithm ended up considering as diverging
-routes that were actually very close to the standard one. We can conclude,
+than we expected. In some cases, the algorithm ended up considering as diverging
+routes that were relatively close to the standard one. We can conclude,
 therefore, that even though we think we were able to determine standard routes
-with acceptable accuracy and confidence for medium to big airports, diverging
-routes detection still has some issues. We do think that the approach of using
-sectors and editing distance can give good results in this context, but the
-distance function obviously needs much more experiments are fine-tuning to be
-able to give good results in all situations.
-
-Observing our results, we conclude that it is definitely possible to
-identify flights with acceptable reliability using raw ADS-B data alone. There
-are however some issues with the data that make this effort less than
-trivial, and some advanced techniques as well as other data sources may be
-needed to determine them with more than average accuracy.
+with acceptable accuracy and confidence for medium- to big-size airports,
+diverging routes detection still has some issues. We do think that the approach
+of using sectors and editing distance can give good results in this context, but
+the distance function obviously needs more experiments are fine-tuning to
+be able to give good results in all situations.
 
 \section{Future work}
 
