@@ -9,10 +9,6 @@
 \begin{document}
 \maketitle
 
-\begin{abstract}
-Abstract goes here.  
-\end{abstract}
-
 \section{Introduction}
 % what is this project about and why is it interesting?
 
@@ -156,6 +152,18 @@ frequent, so at the end of the day the final results did not suffer too much.
 
 \subsection{Flights}
 
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=0.28]{imgs/4b7fad-altitudes.png}
+  \caption{Altitude values of the aircraft with ICAO 4b7fad, during September
+    20th, 2016. It can be seen that the data points disappear when the aircraft
+    approaches the ground. Also, in the group of points of the left, the
+    information on the first part of the flight is entirely missing, and the
+    first point available has timestamp 06:46 am. This is almost
+    certainly due to the airplane traveling through a poorly covered area.}
+  \label{fig:alts}
+\end{figure}
+
 Having extracted all position information from the raw avro files, there is now
 the problem of identifying discrete flights from it.
 Given a sequence of positions for a given aircraft, on a particular day, we
@@ -197,6 +205,14 @@ explained below), and also the one that seems to filter out the majority of
 potential flights.
 
 \subsubsection{Departure and arrival airports}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[scale=0.28]{imgs/4b7fad-altitudes-grouped.png}
+  \caption{Altitude values of the aircraft with ICAO 4b7fad, during September
+    20th, 2016, as grouped by the flight detection algorithm.}
+  \label{fig:alts}
+\end{figure}
 
 A flight is given by a sequence of positions, as well as departure and arrival
 airports. There two last informations, however, are not provided by the data and
@@ -402,6 +418,16 @@ enough to be abstracted by a single representative of the entire group.
 
 \subsubsection{CO2 consumption}
 
+\begin{figure}[t]
+  \centering
+  \includegraphics[scale=0.4]{imgs/amsterdam-vatry-co2.png}
+  \caption{Visualization of CO2 consumption for the standard route from
+    Amsterdam to Vatry. It can be seen that the route is mostly green for the
+    first part. It then shifts to red in the last part, where it takes a detour
+    from the straight-line route.}
+  \label{fig:amsterdam-vatry}
+\end{figure}
+
 A little research showed that an average aircraft procudes about 53 pounds of
 carbon dioxide per mile. We used this value to compute the difference in CO2
 production between the standard routes and the corresponding straight-line
@@ -420,16 +446,46 @@ the destination airport. Therefore, we considered as value of each segment the
 angle between the direction that the aircraft is facing in that segment and the
 direction of the destination airport. Higher values lead to more red segments.
 
-% TODO insert picture of route coloring here
-
 \subsection{Deployment on the hadoop cluster}
 % how we actually implemented the algorithms on the hadoop cluster
 
-% also add results of the different phases in terms of file size. for example,
-% how much the data shrinks from raw avro to position messages only.
+When working of large-scale datasets, it is essential to understand the
+available data and try to extract only relevant information from it. The
+subdivision of our algorithm in different phases is not only a convenient
+logical partitioning of operations, but it is essential to transform the dataset
+into smaller datasets, tailored to our needs. It is useful to do this
+transformation gradually, step by step, so that single intermediate phases can
+be reiterated without affecting the previous ones.
+
+The whole algorithm has been implemented as a Scala + Spark project, that has
+been deployed to the Hadoop cluster. We developed every phase of the algorithm
+as a separate executable Scala class, allowing us to run each phase separately.
+
+The position extraction phase was run on the entire dataset of raw AVRO-encoded
+messages, and it was, and one could expect, the most time consuming. The entire
+execution took about 48 hours. As a result of this phase, we were able to shrink
+the data from about 85 GB per day to about 10 GB of position points per day.
+This of course made the next phases of the algorithm more tractable. Position
+data has then been processed by the flight detection algorithm, in about 24
+hours. This phase, as we already explained, throws away a lot of data. Also,
+flights are represented and saved to disk as sequences of sectors, where each
+flight it composed of 20--50 sectors. This gives a very succint representation,
+and we were able to store the output of this phase in just about 4 MB per day.
+The small size of the flights data allowed us to run the route clustering
+algorithm and all the additional JSON files generation for the visualization in
+under 30 minutes. With such small execution time, we were able to test the
+results of the algorithm several times, and improve its performance and results.
 
 \section{Experiments}
 % a description of the experiments and their results.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[scale=0.4]{imgs/gatwick-schiphol.png}
+  \caption{Results of standard (blue) and diverging (red) routes detection for
+    flights from London Gatwick to Amsterdam Schiphol.}
+  \label{fig:gatwick-schiphol}
+\end{figure}
 
 \paragraph{Flight detection}
 
@@ -496,6 +552,16 @@ icaos without a proper airline code are likely to correspond to private airplane
 % revisit the research questions and hypotheses and try to answer them. Any new
 % questions? Insights in the usability of the employed technology for particular
 % tasks?
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[scale=0.35]{imgs/schiphol-linate.png}
+  \caption{Results of standard (blue) and diverging (red) routes detection for
+    flights from Amsterdam Schiphol to Milano Linate. It can be seen that the
+    diverging route on the right is very similar to the standard route, but the
+    clustering algorithm fails to classify it as such.}
+  \label{fig:schiphol-linate}
+\end{figure}
 
 ... The OpenSky network counts 70 active sensors at the time of development,
 yielding a pretty good coverage of the western Europe area. Some areas are
