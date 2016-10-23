@@ -14,45 +14,34 @@
 
 \section{Introduction}
 
-The number of flying airplane has increased much in the last decade. This led to
-many problems, mostly related to security and air traffic controls. It was clear
+The number of flying airplanes has increased much in the last decade. This led to
+many problems, mostly related to security and air traffic control. It was clear
 that radar surveillance systems would not be sufficient to monitor flights,
-since airplanes are passive entity. With the introduction of new technologies, a
+since airplanes are passive entities. With the introduction of new technologies, a
 new standard called ADS-B has been developed to actively monitor aircrafts and
 manage routings.
 
 \textit{Automatic Dependant Surveillance - Broadcast} (ADS-B) is the last
 generation standard for air traffic monitoring. The main idea of this technology
-is that each aircraft broadcast its position and status using internal sensors,
-without relying on external entities. On the other side, each airplane is able
-to receive the messages and detect the position of other vehicle autonomously,
-thus maintening a minimum distance and avoiding collision.
+is that each aircraft broadcasts its position and status using internal sensors,
+without relying on external entities. On the other hand, each airplane is able
+to receive the messages and detect the position of other vehicles autonomously,
+thus allowing it to maintain a minimum distance and avoid collision.
 
 ADS-B messages are sent without any encryption and can be received and decoded
-by everyone. Morover this equipment will be mandatory in 2017 in most countries.
-We obtained a dataset, provided by OpenSky network, containing all the ADS-B
-messages sent by airplanes and collected by volunteers. The dataset includes
-data about flights from the 18\textsuperscript{th} September 2016 to the
-24\textsuperscript{th} September 2016 and collected by about 70 sensors spread
-across Europe.
-
-In this paper we explain our analysis of such dataset, starting from the
-decoding of the position. The main goals of this project are:
-\begin{itemize}
-  \item Detecting the standard routes between all the pairs of airports;
-  \item Detecting abnormal routes between pairs of airports;
-  \item Calculate the wastage of fuel travelling through the standard route
-  instead of flying over a straight line.
-\end{itemize}
-
-We will show that, though most standard routes are really close to the straight
-line, there are some routes that are clearly away from it. Moreover, for some
-couples of airports, there are few routes that differ from the standard one.
+by anyone. We were able to obtain a dataset, provided by OpenSky network,
+containing all the ADS-B messages sent by airplanes and collected by volunteers
+during a time period spanning a week. The dataset includes data from September
+18\textsuperscript{th} 2016 to September 24\textsuperscript{th} 2016, as
+collected by about 70 sensors spread across western Europe. It is the purpose of
+this paper to explain our approach in analyzing and extracting data from such
+dataset. It is particularly intresting to see to which point data like the one
+offered by OpenSky is suitable to get useful information about flights. In this
+project, we concentrate on analyzing the air traffic and its patterns, and in
+particular why try to discover standard routes between pairs of
+airports, as well as flights that diverge from them.
 
 \section{Related Work}
-% meaningfully summarize related literature to explain what this project builds
-% on, in particular, discuss the two research papers chosen with this project
-% (and discussed in your presentation)
 
 \subsection{OpenSky Network}
 
@@ -129,10 +118,6 @@ as follows:
 \end{enumerate}
 
 \section{Research Questions}
-% which questions is this project trying to answer, and/or hypotheses to
-% investigate? These should cover both the project topic, as well as the
-% technological side (aptness of the tools for the job, scalability of the
-% solution).
 
 With this project, we aim to answer the following questions:
 
@@ -167,23 +152,24 @@ the project:
 % spark, scala, etc
 % python, haskell for scripting, etc
 
-Analyzing the entire dataset require a big computational power, therefore use a
-cluster to perform analyze the data. However, before running on the cluster, we
-tried the algorithms locally on a small subset of data to test correctness end
-efficiency and to obtain statistics. For this reason, we used different
-technologies depending on where we ran the analysis.
+Analyzing the entire dataset requires a lot of computational power, hence the
+need to use a cluster to perform analysis on the data. However, before executing
+on the cluster, it is essential to be able to try the algorithms locally on a
+small subset of data, in order to test their correctness end efficiency, and to
+obtain useful statistics. For this reason, we used different technologies
+depending on where we ran the analysis.
 
 On the cluster, we chose to use \textit{Apache Spark} because it is extremely
-fast while providing an easy interface, resulting suitable for our application.
-In particular, the \textit{Scala} version was chosen instead of PySpark because
-of the strongly typing and the functional programming approach. In addition to
-this, the Java library \textit{libadsb} was used to decode the position
+fast while providing an easy and convenient development interface. In
+particular, the \textit{Scala} version was chosen instead of PySpark because of
+the strongly typing and the functional programming approach. In addition to
+this, the Java library \textit{libadsb} was used to decode the raw ADS-B
 messages.
 
-Locally, in addition to \textit{Scala} we used \textit{Haskell} and
-\textit{Python} as scripting languages. The first one was suitable for data
-manipulation and algorithms testing, while the second one offers a convenient
-way to plot data using the library \textit{Matplotlib}.
+On our local datasets, in addition to \textit{Scala} we used \textit{Haskell}
+and \textit{Python} as scripting languages for fast prototyping. The first one
+was suitable for data manipulation and algorithms testing, while the second one
+offers a convenient way to plot data using the library \textit{Matplotlib}.
 
 \subsection{Algorithm overview}
 
@@ -593,7 +579,7 @@ results of the algorithm several times, and improve its performance and results.
   \label{fig:gatwick-schiphol}
 \end{figure}
 
-\paragraph{Flight detection}
+\subsection{Flight detection}
 
 We carried out some experiments on the results of the various phases and
 algorithms, in order to asses their behaviour. Some statistic data collected in
@@ -644,7 +630,7 @@ an ideal dataset, every cluster corresponds to a flight.
   \label{table}
 \end{table}
 
-\paragraph{Airlines}
+\subsection{Airlines}
 
 In order to compute the amount of flights diverging from a standard route per
 airline, we needed to associate a an airline to each flight. This is not a
@@ -664,7 +650,7 @@ had a unique three-letter airline code in their callsigns, and 15691 had a code
 actually corresponding to an airline in the dataset. The remaining 4169
 icaos without a proper airline code are likely to correspond to private airplanes.
 
-\paragraph{Diverging flights}
+\subsection{Diverging flights}
 
 %%% nondiverging vs diverging flights
 
@@ -677,9 +663,11 @@ icaos without a proper airline code are likely to correspond to private airplane
   \centering
   \includegraphics[scale=0.35]{imgs/schiphol-linate.png}
   \caption{Results of standard (blue) and diverging (red) routes detection for
-    flights from Amsterdam Schiphol to Milano Linate. It can be seen that the
-    diverging route on the right is very similar to the standard route, but the
-    clustering algorithm fails to classify it as such.}
+    flights from Amsterdam Schiphol to Milano Linate, during our previous
+    experiments. It can be seen that the diverging route on the right is very
+    similar to the standard route, but the clustering algorithm fails to
+    classify it as such. This made us increase the threshold in the
+    classification of routes in clusters.}
   \label{fig:schiphol-linate}
 \end{figure}
 
@@ -692,16 +680,16 @@ are however some issues with the data that make this effort less than
 trivial, and some advanced techniques as well as other data sources may be
 needed to determine them with more than average accuracy.
 
-The results from the execution of the route detection algorithm are mixed.
+The results from the execution of the route detection algorithm are quite good.
 It should be considered that there are a lot of minor airports, and flight
-information for those airports is, as one could expect, incomplete.
-Of 1165 of the total combinations of airports, about 85 \% of them has their
-standard route determined by under 10 flights. These pairs usually correspond
-to minor airports, and the accuracy of the computed standard route has
-necessarily to be considered pretty low. For major airports, however, the
-available data rises significantly. As an example, the standard route between
-Schiphol and London Gatwick and converse has been determined by 39,
-respectively 42 routes.
+information for those airports is, as one could expect, incomplete. Of 1165 of
+the total combinations of airports, about 85 \% of them has their standard route
+determined by under 10 flights. These pairs usually correspond to minor
+airports, and the accuracy of the computed standard route has necessarily to be
+considered pretty low. For major airports, however, the available data rises
+significantly. As an example, the standard route between Schiphol and London
+Gatwick and converse has been determined by 39, respectively 42, routes. This
+gives more confidence on the accuracy of the result.
 
 Tuning the distance function for the route clustering phase was more challanging
 than we expected. In some cases, the algorithm ended up considering as diverging
