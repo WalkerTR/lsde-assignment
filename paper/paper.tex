@@ -5,7 +5,7 @@
 
 \addbibresource{bibliography.bib}
 
-\title{Title goes here}
+\title{Title}
 \author{Filippo Sestini \\ Vrije Universiteit Amsterdam \\ f.sestini@student.vu.nl \and
   Davide Dal Bianco \\ Vrije Universiteit Amsterdam \\ d.dalbianco@student.vu.nl}
 
@@ -45,25 +45,27 @@ airports, as well as flights that diverge from them.
 
 \subsection{OpenSky Network}
 
-Most of aircraft are provided with ADB-S transmitter, which send continuosly
-information about the status and the position of the aircraft to guarantee
-better air traffic control. The messages are not encripted and, in most region,
+Most aircrafts have equipped with an ADB-S transmitter, with which they send
+information about their status and the position continuously, to guarantee
+better air traffic control. These messages are not encripted and, in most regions,
 this technology will become mandatory in 2020. For these reasons OpenSky network
-was recently born\cite{opensky}.
+has been created \cite{opensky}.
 
 OpenSky is an open source network that aggregates ADS-B messages collected by
 volunteers around the globe. The dataset is accessible to everyone for
-non-profit purposes and the data is provided in the raw format, in order to
+non-profit purposes and the data is provided in raw format, in order to
 perform research and statistics about air traffic. \\
-However there are some limitation to the data. Only part of Europe has a good
-coverage, which means there are many areas where is not yet possible to detect
-airplanes informations. Furthermore messages are collected by volunteers and
-there is not guarantee that antennas are working properly 24/7.
+There are some limitation to the data that is collected by the network. Western
+Europe is well, but only partially covered. In areas where coverage is spotty or
+absent, it is not possible to detect complete airplanes informations.
+Additionally, messages are collected by volunteers and there are no guarantees
+about the reliability of the collected information.
 
 \subsubsection{ADS-B messages}
 
 The ADS-B standard defines different kinds of messages which are sent at
-different frequencies:
+different frequencies. Among those types, four are particularly useful to
+extract information about airplanes and flights:
 
 \begin{itemize}
   \item \textit{Aircraft identification} messages contain the callsign of the
@@ -74,48 +76,44 @@ different frequencies:
   the airplane.
 \end{itemize}
 
-In addition to these messages, other emergencies, priority, capability,
-navigation accuracy category, and operational modes messages could be
-broadcasted.
+\subsection{Route clustering}
 
-\subsection{Routes detection}
-
-A way to reduce the number of air routes is illustrated bt J. DeArmon.
-The research showed that similar routes can be grouped to reduce the
-number of path between a pair of airports thus decrease air traffic 
-congestion\cite{routeclustering}. The same approach could be used to detect
-standard routes where aircraft fly, given the departure and arrival airports.
-The first prototype of this model has been developed to improve the air traffic
-flow in the National Airspace System of the USA.
+The research led by J. DeArmon showed that similar routes can be grouped
+together based on their similarity, and the result of this grouping can be used
+to reduce the number of paths between a pair of airports, thus decreasing air
+traffic congestion\cite{routeclustering}. The first prototype of this model has
+been developed to improve the air traffic flow in the National Airspace System
+of the USA.
 
 \subsubsection{Routes distance}
 
 Routes are represented by an ordered list of the geographical sectors where the
-aircrafts transit. Prior to define the clustering algorithm, it is important to
+aircrafts transit. Prior to devising the clustering algorithm, it is important to
 define how to measure the distance between two different routes. Since each
 sector is identified by a code, the string editing distance can be used to
 measure the distance between two different routes. The distance is therefore
-represented by the minimum number of operation -- insertion, deletion and
-replacement -- to transform Route 1 into Route 2 or vice-versa. Different weight
+represented by the minimum number of operations -- insertion, deletion and
+replacement -- to transform Route 1 into Route 2 or vice-versa. Different weights
 can also be applied to different operations. The distance should not depend by
-the length of the routes and for this reason it is then divided by the sum of
-the lengths of the routes. The final result represent the percentage of
-difference between the routes.
+the length of the routes and for this reason it is divided by the sum of
+the lengths of the routes. The final result represents the percentage of
+difference between the routes\cite{routeclustering}.
 
 \subsubsection{Routes clustering}
 
-Given a distance measure for each couple of routes, it is necessary to define a
-clustering algorithm to group them. Many methods has been tried during the
-research and the \textit{Leader algorithm} showed the best results. It proceed
-as follows:
+Given a suitable distance measure for each couple of routes, it is necessary to
+define a clustering algorithm to group them. Many methods have been tried during
+the research described in \cite{routeclustering}, and the \textit{Leader
+  algorithm} showed the best results. The algorithm proceeds by processing the
+entire sequence of routes to be clustered, and it starts by assigning the first
+of these routes to the first cluster. In then examines each route in turn: a
+route that is sufficiently close to the leader of a cluster is assigned to it.
+If no leader is found to be close enough to the current route, it is assigned as
+the leader of a new cluster.
 
-\begin{enumerate}
-  \item A random route is assigned as leader of a new cluster;
-  \item All the other routes which distance from the leader is less than a
-  threshold are assigned to the cluster;
-  \item Repeat the steps with the remaining routes until all routes are assigned
-  to a cluster.
-\end{enumerate}
+As it is explained in detail below, our route detection algorithm comprises a
+part of route clustering that is inspired in many ways by the above algorithm,
+as described in \cite{routeclustering}.
 
 \section{Research Questions}
 
@@ -744,9 +742,6 @@ quantity of CO2 that an average aircraft produces per mile. A better approach
 could use the ICAO number of each single aircraft to index an external dataset
 and discover its characteristics. These properties could be used to compute a
 more precise and realistic estimate of CO2 production.
-
-% TODO: How other work could be based on ours?
-
 
 \printbibliography
 
