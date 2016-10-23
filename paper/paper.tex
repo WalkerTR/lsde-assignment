@@ -115,8 +115,6 @@ that follow, as we were not able to detect flights between two different days.
 From our observations, however, we concluded that these flights are not very
 frequent, so at the end of the day the final results did not suffer too much.
 
-% Format of the output?
-
 \subsubsection{Flights}
 
 \paragraph{Identification of discrete flights}
@@ -147,9 +145,19 @@ Each group is then further analyzed to determine if it actually corresponds to a
 single flight or not. Again, the analysis is fairly simple, and it considers
 altitude information of the points to detect take-offs and landings. In
 particular, a group of points is considered a valid flight if and only if it
-starts and ends with points at an altitude of 3000 km or below, and shows an
+starts and ends with points at an altitude of 3000 m or below, and shows an
 ascent as well as a descent. Ascents and descents are defined as sequences of
 points which altitudes rise, respectively decrease, steadily for 2000 meters.
+
+We acknowledge that the criteria according to which we group and filter discrete
+flights are pretty restrictive, and that we inevitably throw away a lot of data
+and possibly some flights in the process. However, given the unreliability of
+the data and the difficult of our task, we wanted to deal with sufficiently
+precise and detailed data, in order to make our life easier in the subsequent
+phases of the processing. In particular, the restriction on the end points of a
+flight being below 3000 m is the most important one for our purposes (as
+explained below), and also the one that seems to filter out the majority of
+potential flights.
 
 \paragraph{Departure and arrival airports}
 
@@ -351,7 +359,25 @@ observation of the results.
 
 \subsubsection{CO2 consumption}
 
-% ??????
+A little research showed that an average aircraft procudes about 53 pounds of
+carbon dioxide per mile. We used this value to compute the difference in CO2
+production between the standard routes and the corresponding straight-line
+route.
+
+We also wanted to offer a visualization of the comsumption of fuel with respect
+to a straight-line route. The visualization should show the points of a given
+route on the map in different colors on a palette from greed to red, where hues
+towards red would indicate a point of high consumption in the route.
+To do this, we needed to attribute to each segment of the route a suitable value,
+from which we could determine its color. Rather than trying to compute a value
+of ``comsumption'' for each segment, we decided to determine it based on
+how different the route is with respect to the straight-line route. The main
+characteristic of a straight-line route is that the airplane always points to
+the destination airport. Therefore, we considered as value of each segment the
+angle between the direction that the aircraft is facing in that segment and the
+direction of the destination airport. Higher values lead to more red segments.
+
+% TODO insert picture of route coloring here
 
 \subsection{Deployment on the hadoop cluster}
 % how we actually implemented the algorithms on the hadoop cluster
@@ -362,16 +388,62 @@ observation of the results.
 \section{Experiments}
 % a description of the experiments and their results.
 
-%%% position grouping
-% LOG: positions-20160918 has 199030 clusters and 1219 good clusters
-% LOG: positions-20160919 has 170594 clusters and 1103 good clusters
-% LOG: positions-20160920 has 126370 clusters and 1241 good clusters
-% LOG: positions-20160921 has 127855 clusters and 1205 good clusters
-% LOG: positions-20160922 has 127982 clusters and 1308 good clusters
-% LOG: positions-20160923 has 130662 clusters and 1243 good clusters
-% LOG: positions-20160924 has 121624 clusters and 874 good clusters
+\paragraph{Flight detection}
 
-%%% flight -> airline. how to, statistics: how many without airline
+We carried out some experiments on the results of the various phases and
+algorithms, in order to asses their behaviour. Some statistic data collected in
+the flight detection phase show how our classification criteria turned out to be
+pretty restrictive, as expected.
+
+This result should be attributed to the restrictive criteria of the
+classification algorithm, as well as to the incomplete information provided by
+the dataset. It should be recalled that, even though the OpenSky network
+comprises at the moment of 70 active sensors, some spots in the western Europe
+area may still be pooly covered, or not covered at all. Even a small poorly
+covered are makes all information on the flights passing through it incomplete,
+thus unsuitable for our analysis.
+
+It should also be considered that what our algorithm considers as a cluster is
+just a group of position points that is sufficiently dense. A cluster does not
+necessarily corresponds to a flight with incomplete data (and most of the times
+it doesn't). Comparing the number of detected flights with the total number of
+clusters is not a good indication of the undetected flights or the amound of
+position points discarded by the algorithm.
+Having said this, the table still gives an idea of how good the dataset is. In
+an ideal dataset, every cluster corresponds to a flight.
+
+% TODO make a table
+%%% position grouping
+% LOG: positions-20160918 has 199030 clusters and 1219 flights
+% LOG: positions-20160919 has 170594 clusters and 1103 flights
+% LOG: positions-20160920 has 126370 clusters and 1241 flights
+% LOG: positions-20160921 has 127855 clusters and 1205 flights
+% LOG: positions-20160922 has 127982 clusters and 1308 flights
+% LOG: positions-20160923 has 130662 clusters and 1243 flights
+% LOG: positions-20160924 has 121624 clusters and 874 flights
+
+\paragraph{Airlines}
+
+In order to compute the amount of flights diverging from a standard route per
+airline, we needed to associate a an airline to each flight. This is not a
+completely trivial task, as airline information is not provided at all by the
+data. Every aircraft, hence every flight, has an ICAO number associated to it,
+from which it is possible to determine callsigns from the identification
+messages in the dataset. In the case of commercial flights, the callsign of an
+aircraft contains the ICAO three-letter code of the airline for which the
+vehicle is flying for at the moment. Since aircraft are bought by airlines and
+hardly transferred from an airline to another, it is safe to assume that only
+one callsign is sufficient to determine the airline of an aircraft.
+The mapping between three-letter ICAO codes of airlines and their name has been
+done with the help of an external dataset.
+
+Of 19860 distinct icaos for which identification messages were available, 15911
+had a unique three-letter airline code in their callsigns, and 15691 had a code
+actually corresponding to an airline in the dataset. The remaining 4169
+icaos without a proper airline code are likely to correspond to private airplanes.
+
+\paragraph{Diverging flights}
+
 
 %%% nondiverging vs diverging flights
 
@@ -382,18 +454,77 @@ observation of the results.
 % questions? Insights in the usability of the employed technology for particular
 % tasks?
 
-% 70 active sensors in the opensky network
+... The OpenSky network counts 70 active sensors at the time of development,
+yielding a pretty good coverage of the western Europe area. Some areas are
+covered almost perfectly, and for those we were able to detect flight accurately.
+
+  * What are the standard routes?
+
+The results from the complete execution of the algorithm are quite good.
+It should be considered that there are a lot of minor airports, and flight
+information for those airports is, as one could expect, incomplete.
+Of 1165 of the total combinations of airports, about 85 \% of them has their
+standard route determined by under 10 flights. These pairs usually correspond
+to minor airports, and the accuracy of the computed standard route has
+necessarily to be considered pretty low. For major airports, however, the
+available data rises significantly. As an example, the standard route between
+Schiphol and London Gatwick and converse has been determined by 39,
+respectively 42 routes.
+  
+% TODO say something about the distance function
+
+
+  * Which flights and airlines diverge from them? In which airports?
+  * How much CO2 would be saved if aircrafts followed a straight-line route
+    instead of the standard one?
+    
+* Is it possible to determine flights from raw adsb data?
+
+Observing our results, we conclude that it is definitely possible to
+identify flights with acceptable reliability using raw ADS-B data alone. There
+are however some issues with the data that make this effort less than
+trivial, and some advanced techniques as well as other data sources may be
+needed to determine them with more than average accuracy.
 
 \section{Future work}
 
-Improve algorithms:
+We find that the accuracy of many of our algorithms is difficult to assess,
+given the lack of reliable data to compare against. Future work on this project
+could start by retrieving and using such external data, when available. The most
+significant effort would be to asses the correctness of the route clustering
+algorithm with a precompiled dataset of standard routes.
 
-* flight detection
-  * dataset relating callsigns to flights
-  * using velocity and or more advanced techniques to make up for the misisng points
-* route detection
-  * use external database
-* CO2 consumption
-  * use icao to get aircraft characteristics
+The next step would be to improve the algorithms, by making them more clever and
+use more data from the dataset in a better way. The flight detection algorithm
+could be improved by using an external dataset relating callsigns, which are
+amost fully available from the data, to flights. At the time of writing we are
+not aware of such dataset being publicly available, but there could be in the
+future. Also, our flight detection algorithm does not take velocity messages
+into account. Velocity information is not vital in flights detection, but we do
+not exclude that the heading information of an aircraft could be combined with
+its altitude information to better recognize ascents and descents.
+The grouping criteria in our flight detection are quite restrictive,
+to be able to get sufficiently reliable outputs with a relatively simple
+algorithm. These criteria can surely be made less restrictive, using some more
+advanced techniques to make up for missing points.
+
+There is room for improvement in the route detection algorithm, for example
+by tuning the way routes are clustered together, and in particular by selecting
+a better distance function. Another improvement would also come naturally by
+increasing the number of flights available to the analysis.
+A different approach could be to discard the current algorithm and instead use
+an external dataset of standard routes. In this setting, standard routes need
+not be computed. Flights that diverge from them can simply be discovered by
+computing the distance from the standard route for the particular pair of
+airports, and checking the result against a threshold.
+
+Currently, the CO2 consumption for the flights is computed in a very simple way,
+by multiplying the distance traveled by the airplanes by an estimate of the
+quantity of CO2 that an average aircraft produces per mile. A better approach
+could use the ICAO number of each single aircraft to index an external dataset
+and discover its characteristics. These properties could be used to compute a
+more precise and realistic estimate of CO2 production.
+
+% TODO: How other work could be based on ours?
 
 \end{document}
